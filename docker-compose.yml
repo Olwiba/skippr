@@ -1,0 +1,35 @@
+services:
+  skippr:
+    build: .
+    container_name: skippr
+    restart: unless-stopped
+
+    ports:
+      - "7681:7681"
+
+    volumes:
+      # Persistent project directory
+      - skippr-projects:/home/dev/projects
+      # Persistent Claude Code config and auth
+      - skippr-claude:/home/dev/.claude
+
+    environment:
+      # Claude Code API Key - set this in Coolify
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+      # Example: Connect to Coolify-managed Postgres
+      # Format: postgresql://user:password@postgres-service:5432/dbname
+      - DATABASE_URL=${DATABASE_URL:-postgresql://user:password@host:5432/dbname}
+
+      # Optional: Set timezone
+      - TZ=${TZ:-UTC}
+
+    # Coolify-compatible labels
+    labels:
+      - "coolify.managed=true"
+
+volumes:
+  skippr-projects:
+    driver: local
+  skippr-claude:
+    driver: local
