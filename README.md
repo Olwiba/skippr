@@ -2,9 +2,9 @@
 
 # Skippr
 
-**A self-hosted Docker-based development environment for coding from anywhere, on any device.**
+**A self-hosted development environment for coding from anywhere, on any device.**
 
-Skippr gives you a full-featured terminal accessible from your browser, optimized for mobile development with Claude Code. Deploy once, code from your phone, tablet, or any browser.
+Skippr gives you a full-featured terminal accessible from your browser. Deploy once, code from your phone, tablet, or any browser.
 
 ---
 
@@ -142,39 +142,6 @@ Prefix: `Ctrl+A` (easier than `Ctrl+B` on mobile)
 | `Ctrl+A` then `[` | Scroll mode (q to exit) |
 
 **Mouse support enabled** - tap to switch panes, scroll with your finger.
-
----
-
-## Project Structure
-
-```
-skippr/
-├── Dockerfile              # Ubuntu 24.04 + Node 22 + Bun + tools
-├── docker-compose.yml      # Coolify deployment config
-├── .env.example            # Environment variable template
-├── config/
-│   ├── .tmux.conf          # Mobile-optimized tmux config
-│   └── .zshrc              # Minimal zsh with git-aware prompt
-├── images/
-│   └── skippr.0.0.1.png    # Banner image
-├── CLAUDE.md               # Instructions for Claude Code
-└── README.md               # This file
-```
-
----
-
-## Tips
-
-- **Session persistence**: Close your browser anytime. Run `tmux attach` to reconnect to your session.
-- **Git aliases**: Use `gs` (status), `ga` (add), `gc` (commit), `gp` (push), `gl` (log)
-- **Multiple projects**: All projects share the same container - just `cd` between them
-- **Claude Code alias**: Type `cc` instead of `claude-code`
-
----
-
-## Why "Skippr"?
-
-Skip the overhead of local development. Jump straight into coding from anywhere.
 
 ---
 
