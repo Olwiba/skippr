@@ -14,12 +14,8 @@ services:
       - skippr-claude:/home/dev/.claude
 
     environment:
-      # Claude Code API Key - set this in Coolify
+      # Required: Claude Code API Key - set this in Coolify
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-
-      # Example: Connect to Coolify-managed Postgres
-      # Format: postgresql://user:password@postgres-service:5432/dbname
-      - DATABASE_URL=${DATABASE_URL:-postgresql://user:password@host:5432/dbname}
 
       # Optional: Set timezone
       - TZ=${TZ:-UTC}

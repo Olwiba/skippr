@@ -1,197 +1,217 @@
+![Skippr Banner](images/skippr.0.0.1.png)
+
 # Skippr
 
-A self-hosted Docker-based development environment for remote mobile coding from anywhere.
+**A self-hosted Docker-based development environment for coding from anywhere, on any device.**
 
-## What is Skippr?
+Skippr gives you a full-featured terminal accessible from your browser, optimized for mobile development with Claude Code. Deploy once, code from your phone, tablet, or any browser.
 
-Skippr is a containerized development environment that runs on your server and provides a web-based terminal accessible from anywhere. It's designed for coding on mobile devices, with all the tools you need to build, test, and deploy applications using Claude Code.
+---
 
-The workflow is simple:
-1. Access your Skippr instance via a web browser on your phone
-2. Use tmux to create split panes - one for Claude Code, one for your dev server
-3. Code with Claude, see changes in real-time via Tailscale-exposed dev servers
-4. Commit and push to trigger Coolify deployments
+## What's Included
+
+- **ttyd** - Web-based terminal (port 7681)
+- **tmux** - Session persistence with mobile-friendly shortcuts
+- **Claude Code CLI** - AI-powered development assistant
+- **Node.js 22 LTS** + **Bun** - Modern JavaScript runtimes
+- **Git** + **zsh** - Essential development tools
+- **Persistent storage** - Projects and config survive restarts
+
+---
 
 ## Architecture
 
-Skippr runs as a single Docker container within a Coolify project. It doesn't manage databases - those are handled by Coolify separately. Your Skippr container connects to databases via environment variables.
+```mermaid
+graph TB
+    subgraph "Coolify Project"
+        skippr[Skippr Container<br/>Web Terminal + Dev Tools]
+        db1[(Postgres 1)]
+        db2[(Postgres 2)]
+        db3[(Postgres 3)]
+    end
 
-The container includes:
-- **ttyd** - Web terminal accessible on port 7681
-- **tmux** - Session persistence and split panes (mobile-optimized)
-- **Claude Code CLI** - AI-powered development assistant
-- **Node.js 22** - Latest LTS
-- **Bun** - Fast JavaScript runtime and package manager
-- **Git, zsh** - Standard development tools
+    subgraph "Your Device"
+        browser[Mobile Browser]
+    end
 
-Projects live in `~/projects/` on a persistent volume, and your Claude Code config is stored in `~/.claude/` (also persistent).
+    subgraph "Skippr Container"
+        projects[~/projects/<br/>project-a/<br/>project-b/<br/>project-c/]
+    end
 
-## Coolify Deployment
+    browser -->|HTTPS| skippr
+    skippr --> projects
+    projects -.->|DATABASE_URL| db1
+    projects -.->|DATABASE_URL| db2
+    projects -.->|DATABASE_URL| db3
 
-### 1. Create a New Service in Coolify
-
-1. In your Coolify dashboard, create a new **Docker Compose** service
-2. Point it to this repository
-3. Coolify will use the `docker-compose.yml` file automatically
-
-### 2. Configure Environment Variables
-
-Set these in Coolify's environment variable section:
-
-```bash
-# Required: Your Anthropic API key
-ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-# Example: Connection string to a Coolify-managed Postgres database
-# Replace with your actual database service name and credentials
-DATABASE_URL=postgresql://user:password@postgres-service:5432/dbname
-
-# Optional: Set your timezone
-TZ=America/New_York
+    style skippr fill:#4a9eff
+    style projects fill:#50c878
+    style browser fill:#ff6b6b
 ```
 
-### 3. Deploy
+Skippr runs as a single container providing the development environment. Databases are separate Coolify services that your projects connect to via environment variables.
 
-Deploy the service. Coolify will:
-- Build the Docker image
-- Create persistent volumes for `~/projects` and `~/.claude`
-- Start the container
-- Expose port 7681
+---
 
-### 4. Access Your Environment
+## Quick Start
 
-Coolify will provide a URL to access ttyd. Open it in your mobile browser and you'll land in a zsh shell inside a tmux session.
+### 1. Fork & Deploy
 
-## Setting Up Tailscale for Dev Server Access
+1. **Fork this repository** to your GitHub account
 
-To access hot-reloading dev servers (like `bun dev` running on port 3000) from your phone:
+2. **Create a new service in Coolify**:
+   - Type: Docker Compose
+   - Source: Your forked repository
+   - Coolify will automatically use `docker-compose.yml`
 
-1. **Install Tailscale in your Skippr container** (run inside the container):
+3. **Set environment variables** in Coolify:
    ```bash
-   curl -fsSL https://tailscale.com/install.sh | sh
-   sudo tailscale up
+   ANTHROPIC_API_KEY=sk-ant-your-key-here
+   TZ=America/New_York  # Optional
    ```
 
-2. **Enable Tailscale Serve** to expose a dev server:
-   ```bash
-   # If your dev server runs on port 3000
-   tailscale serve https / http://127.0.0.1:3000
-   ```
+4. **Deploy** 🚀
 
-3. **Access from your phone**:
-   - Install Tailscale on your phone and join the same network
-   - Visit `https://skippr.yourtailnet.ts.net` (or whatever hostname Tailscale assigns)
+Coolify will build the container and provide you with a URL like `https://skippr.yourdomain.com`.
 
-This gives you instant access to your hot-reloading dev server without exposing it to the public internet.
+### 2. First Login
 
-## Basic Usage
+Open the URL in your browser. You'll land in a zsh shell inside a tmux session.
 
-### Starting a New Project
+**Authenticate Claude Code**:
+```bash
+claude-code
+```
 
-1. Connect to your Skippr instance
-2. Create a new project directory:
-   ```bash
-   cd ~/projects
-   mkdir my-app
-   cd my-app
-   ```
+Follow the prompts to authenticate with your Anthropic account. This only needs to be done once.
 
-3. Initialize your project:
-   ```bash
-   bun init
-   # or
-   npm init -y
-   ```
+### 3. Start Coding
 
-### Typical Coding Session
+**Create a new project**:
+```bash
+cd ~/projects
+git clone https://github.com/you/your-project
+cd your-project
+```
 
-1. **Create a horizontal split in tmux**:
-   - Press `C-a` then `|` (that's Ctrl+A, release, then Shift+Backslash)
+**Create a tmux split** (Ctrl+A, then |):
+```bash
+# Left pane: Start your dev server
+bun dev
 
-2. **In the left pane, start your dev server**:
-   ```bash
-   bun dev
-   # or
-   npm run dev
-   ```
+# Right pane: Start Claude Code
+claude-code
+```
 
-3. **In the right pane, start Claude Code**:
-   ```bash
-   claude-code
-   # or use the alias
-   cc
-   ```
+---
 
-4. **Code with Claude**, see changes in real-time via Tailscale
+## Accessing Dev Servers with Tailscale
 
-5. **Commit and push** when ready:
-   ```bash
-   git add .
-   git commit -m "feature: add new component"
-   git push
-   ```
+By default, your dev servers (like `bun dev` on port 3000) are only accessible inside the container. Use Tailscale to securely access them from your phone.
 
-This triggers Coolify to deploy your changes.
+### Setup Steps
 
-### Navigating Tmux (Mobile-Friendly)
+**1. Install Tailscale in the Skippr container**:
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
 
-Prefix is `C-a` (Ctrl+A):
+**2. Expose your dev server**:
+```bash
+# If running on port 3000
+tailscale serve https / http://127.0.0.1:3000
+```
 
-| Command | Action |
-|---------|--------|
-| `C-a \|` | Split horizontally (side by side) |
-| `C-a -` | Split vertically (stacked) |
-| `C-a h/j/k/l` | Navigate panes (left/down/up/right) |
-| `C-a c` | Create new window |
-| `C-a n` | Next window |
-| `C-a p` | Previous window |
-| `C-a d` | Detach (session keeps running) |
-| `C-a [` | Enter scroll mode (q to exit) |
-| `C-a r` | Reload tmux config |
+**3. Access from your device**:
+- Install Tailscale on your phone
+- Join the same Tailnet
+- Visit `https://skippr.yourtailnet.ts.net`
 
-**Mouse support is enabled** - you can tap to switch panes and scroll with your finger.
+Now you can see your hot-reloading changes in real-time while coding on your phone.
 
-## Connecting to Coolify-Managed Databases
+---
 
-Your Coolify-managed Postgres (or other databases) can be accessed via the `DATABASE_URL` environment variable:
+## Database Connections
 
+Databases are managed separately in Coolify. Each project configures its own connection:
+
+**Example Coolify project structure**:
+```
+your-coolify-project/
+├── postgres-app1
+├── postgres-app2
+├── postgres-app3
+└── skippr
+```
+
+**Configure per-project** by creating `.env` files:
+```bash
+# ~/projects/my-app/.env
+DATABASE_URL=postgresql://user:password@postgres-app1:5432/myapp
+```
+
+Then use it in your code:
 ```javascript
-// Example with Drizzle ORM
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
-const connectionString = process.env.DATABASE_URL;
-const client = postgres(connectionString);
+const client = postgres(process.env.DATABASE_URL);
 const db = drizzle(client);
 ```
 
-The format is:
-```
-postgresql://username:password@service-name:5432/database-name
-```
+---
 
-Where `service-name` is the name of your Postgres service in Coolify (usually something like `postgres-xyz123`).
+## Tmux Quick Reference
+
+Prefix: `Ctrl+A` (easier than `Ctrl+B` on mobile)
+
+| Command | Action |
+|---------|--------|
+| `Ctrl+A` then `\|` | Split horizontally |
+| `Ctrl+A` then `-` | Split vertically |
+| `Ctrl+A` then `h/j/k/l` | Navigate panes |
+| `Ctrl+A` then `c` | New window |
+| `Ctrl+A` then `d` | Detach (keeps running) |
+| `Ctrl+A` then `[` | Scroll mode (q to exit) |
+
+**Mouse support enabled** - tap to switch panes, scroll with your finger.
+
+---
 
 ## Project Structure
 
 ```
 skippr/
-├── Dockerfile              # Ubuntu 24.04 with Node, Bun, Claude Code, ttyd
-├── docker-compose.yml      # Coolify-compatible compose file
+├── Dockerfile              # Ubuntu 24.04 + Node 22 + Bun + tools
+├── docker-compose.yml      # Coolify deployment config
+├── .env.example            # Environment variable template
 ├── config/
-│   ├── .tmux.conf          # Mobile-friendly tmux config
-│   └── .zshrc              # Minimal zsh config with aliases
+│   ├── .tmux.conf          # Mobile-optimized tmux config
+│   └── .zshrc              # Minimal zsh with git-aware prompt
+├── images/
+│   └── skippr.0.0.1.png    # Banner image
+├── CLAUDE.md               # Instructions for Claude Code
 └── README.md               # This file
 ```
 
+---
+
 ## Tips
 
-- **Authentication**: The first time you run `claude-code`, you'll be prompted to authenticate with Anthropic
-- **Session persistence**: tmux sessions persist even if you close your browser. Run `tmux attach` to reconnect
-- **Quick git**: Use aliases `gs` (status), `ga` (add), `gc` (commit), `gp` (push), `gl` (log)
+- **Session persistence**: Close your browser anytime. Run `tmux attach` to reconnect to your session.
+- **Git aliases**: Use `gs` (status), `ga` (add), `gc` (commit), `gp` (push), `gl` (log)
 - **Multiple projects**: All projects share the same container - just `cd` between them
-- **Port conflicts**: If running multiple dev servers, they'll use different ports - expose each via Tailscale Serve
+- **Claude Code alias**: Type `cc` instead of `claude-code`
+
+---
 
 ## Why "Skippr"?
 
-Because you're skipping the overhead of local development and jumping straight into coding from anywhere.
+Skip the overhead of local development. Jump straight into coding from anywhere.
+
+---
+
+## License
+
+MIT

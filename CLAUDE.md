@@ -25,7 +25,7 @@ Two volumes maintain state across restarts:
 
 ### External Dependencies
 
-Databases (Postgres, etc.) are **not** managed by Skippr - they're separate Coolify services. Connection via environment variables like `DATABASE_URL`.
+Databases (Postgres, etc.) are **not** managed by Skippr - they're separate Coolify services. Each project inside `~/projects/` configures its own database connection via project-level `.env` files.
 
 ## Development Commands
 
@@ -111,7 +111,15 @@ skippr/
 
 ## Environment Variables
 
-Required in Coolify:
-- `ANTHROPIC_API_KEY` - For Claude Code authentication
-- `DATABASE_URL` - Example connection string for external databases
-- `TZ` - Optional timezone setting
+### Skippr Container Level (set in Coolify)
+- `ANTHROPIC_API_KEY` - Required: For Claude Code authentication
+- `TZ` - Optional: Timezone setting (defaults to UTC)
+
+### Project Level (set in each project's .env file)
+Database connections are configured per-project, not at the container level:
+```bash
+# Example: ~/projects/my-app/.env
+DATABASE_URL=postgresql://user:password@postgres-xyz123:5432/myapp
+```
+
+Where `postgres-xyz123` is the name of a separate Postgres service in Coolify.
