@@ -1,4 +1,4 @@
-![Skippr Banner](images/skippr.0.0.1.png?v=1)
+![Skippr Banner](images/skippr.0.0.1.png)
 
 # Skippr
 
