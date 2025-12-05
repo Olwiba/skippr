@@ -1,4 +1,4 @@
-![Skippr Banner](images/skippr.0.0.1.png)
+![Skippr Banner](images/skippr.0.0.1.png?v=1)
 
 # Skippr
 
@@ -16,40 +16,6 @@ Skippr gives you a full-featured terminal accessible from your browser, optimize
 - **Node.js 22 LTS** + **Bun** - Modern JavaScript runtimes
 - **Git** + **zsh** - Essential development tools
 - **Persistent storage** - Projects and config survive restarts
-
----
-
-## Architecture
-
-```mermaid
-graph TB
-    subgraph "Coolify Project"
-        skippr[Skippr Container<br/>Web Terminal + Dev Tools]
-        db1[(Postgres 1)]
-        db2[(Postgres 2)]
-        db3[(Postgres 3)]
-    end
-
-    subgraph "Your Device"
-        browser[Mobile Browser]
-    end
-
-    subgraph "Skippr Container"
-        projects[~/projects/<br/>project-a/<br/>project-b/<br/>project-c/]
-    end
-
-    browser -->|HTTPS| skippr
-    skippr --> projects
-    projects -.->|DATABASE_URL| db1
-    projects -.->|DATABASE_URL| db2
-    projects -.->|DATABASE_URL| db3
-
-    style skippr fill:#4a9eff
-    style projects fill:#50c878
-    style browser fill:#ff6b6b
-```
-
-Skippr runs as a single container providing the development environment. Databases are separate Coolify services that your projects connect to via environment variables.
 
 ---
 
