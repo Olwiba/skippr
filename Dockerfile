@@ -45,6 +45,13 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV BUN_INSTALL="/home/dev/.bun"
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 
+# Configure npm to use user-local directory for global packages
+RUN mkdir -p /home/dev/.npm-global \
+    && npm config set prefix '/home/dev/.npm-global'
+
+# Add npm global bin to PATH
+ENV PATH="/home/dev/.npm-global/bin:${PATH}"
+
 # Install Claude Code CLI
 RUN npm install -g @anthropic-ai/claude-code
 

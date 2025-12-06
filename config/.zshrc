@@ -24,6 +24,7 @@ autoload -Uz compinit && compinit
 zstyle ':completion:*' menu select
 
 # Path additions
+export PATH="$HOME/.npm-global/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
