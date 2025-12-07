@@ -47,7 +47,7 @@ alias ta='tmux attach -t'
 alias tn='tmux new-session -s'
 
 # Claude Code alias
-alias cc='claude-code'
+alias cc='claude'
 
 # Environment message on login
 if [[ -o interactive ]]; then
