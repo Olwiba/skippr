@@ -23,6 +23,9 @@ PROMPT='%F{green}%n@skippr%f:%F{blue}%~%f%F{yellow}${vcs_info_msg_0_}%f
 autoload -Uz compinit && compinit
 zstyle ':completion:*' menu select
 
+# Environment
+export ENV="skippr"
+
 # Path additions
 export PATH="$HOME/.npm-global/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
