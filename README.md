@@ -76,37 +76,34 @@ claude
 
 ## Security Setup (Recommended)
 
-For production use, secure Skippr with IP whitelisting + HTTP Basic Auth:
+For production use, secure Skippr with Tailscale - no public exposure needed.
 
-### Two-Layer Security
-1. **IP Whitelist** - Only allow access from your Tailscale VPN IP
-2. **HTTP Basic Auth** - Username/password at reverse proxy level
+### 1. Install Tailscale on Your Coolify Server
 
-### Quick Setup
+SSH into your server (or use Coolify's web terminal) and run:
 
-**1. Install Tailscale on your mobile device**
-- Get the app from App Store/Play Store
-- Note your Tailscale IP (e.g., `100.x.x.x`)
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+tailscale ip -4   # Note this IP (e.g., 100.x.x.x)
+```
 
-**2. Configure IP whitelist in Coolify**
-- Go to skippr → Configuration → General → Network
-- Uncheck "Readonly labels"
-- Add label:
-  ```
-  traefik.http.middlewares.skippr-ipwhitelist.ipallowlist.sourcerange=100.x.x.x/32
-  ```
-- Update existing middleware label to include `skippr-ipwhitelist`
+### 2. Install Tailscale on Your Mobile Device
 
-**3. Enable HTTP Basic Auth in Coolify**
-- Go to skippr → Configuration → HTTP Basic Authentication
-- Toggle "Enable"
-- Set username and password
-- Save
+1. Download Tailscale from App Store / Play Store
+2. Sign in with the same account
+3. Both devices are now on the same private network
 
-**4. Enable HTTPS**
-- Coolify → Domains → Enable SSL Certificate
+### 3. Configure Skippr in Coolify
 
-Now only you (via Tailscale VPN) can access Skippr, with password protection as backup.
+- **Disable or remove the public domain** for Skippr (Configuration → Domains)
+- Keep the container running - it's now only accessible via Tailscale
+
+### 4. Access Skippr
+
+Open in your mobile browser: `http://100.x.x.x:7681` (your server's Tailscale IP)
+
+That's it! Tailscale handles encryption and authentication. No public exposure, no passwords to remember.
 
 ---
 

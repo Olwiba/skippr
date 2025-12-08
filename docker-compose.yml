@@ -24,8 +24,7 @@ services:
     # Coolify-compatible labels
     labels:
       - "coolify.managed=true"
-      # IP Whitelist is configured in Coolify UI (Configuration > Network > Container Labels)
-      # This prevents label override issues with docker-compose deployments
+      # Security: Access Skippr via Tailscale IP only (no public domain needed)
 
 volumes:
   skippr-projects:
