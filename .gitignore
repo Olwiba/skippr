@@ -1,5 +1,7 @@
-# Environment variables (contains API keys)
+# Environment variables)
 .env
+.env.*
+!.env.example
 
 # Docker volumes and local data
 docker-compose.override.yml
