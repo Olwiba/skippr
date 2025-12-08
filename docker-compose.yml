@@ -14,11 +14,8 @@ services:
       - skippr-claude:/home/dev/.claude
 
     environment:
-      # Required: ttyd authentication
-      - TTYD_USERNAME=${TTYD_USERNAME:-admin}
-      - TTYD_PASSWORD=${TTYD_PASSWORD:-changeme}
-
       # Optional: Claude Code API Key
+      # Leave empty to use browser authentication with Claude.ai Pro
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
 
       # Optional: Set timezone

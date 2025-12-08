@@ -30,16 +30,12 @@ Skippr gives you a full-featured terminal accessible from your browser. Deploy o
    - Source: Your forked repository
    - Coolify will automatically use `docker-compose.yml`
 
-3. **Set environment variables** in Coolify:
+3. **Set environment variables** in Coolify (all optional):
    ```bash
-   # Optional: ttyd password (recommended for security)
-   TTYD_USERNAME=admin
-   TTYD_PASSWORD=your-secure-password
-
-   # Optional: Claude Code API key (or authenticate via browser)
+   # Claude Code API key (or authenticate via browser)
    ANTHROPIC_API_KEY=sk-ant-your-key-here
 
-   # Optional: Timezone
+   # Timezone
    TZ=America/New_York
    ```
 
@@ -80,11 +76,11 @@ claude
 
 ## Security Setup (Recommended)
 
-For production use, secure Skippr with IP whitelisting + password authentication:
+For production use, secure Skippr with IP whitelisting + HTTP Basic Auth:
 
 ### Two-Layer Security
 1. **IP Whitelist** - Only allow access from your Tailscale VPN IP
-2. **Password Auth** - ttyd login prompt as second layer
+2. **HTTP Basic Auth** - Username/password at reverse proxy level
 
 ### Quick Setup
 
@@ -101,11 +97,11 @@ For production use, secure Skippr with IP whitelisting + password authentication
   ```
 - Update existing middleware label to include `skippr-ipwhitelist`
 
-**3. Set password via environment variables**
-```bash
-TTYD_USERNAME=admin
-TTYD_PASSWORD=your-secure-password
-```
+**3. Enable HTTP Basic Auth in Coolify**
+- Go to skippr → Configuration → HTTP Basic Authentication
+- Toggle "Enable"
+- Set username and password
+- Save
 
 **4. Enable HTTPS**
 - Coolify → Domains → Enable SSL Certificate
