@@ -1,7 +1,13 @@
 #!/bin/bash
 set -e
 
+# Dracula theme for ttyd
+THEME='{"background":"#282a36","foreground":"#f8f8f2","cursor":"#f8f8f2","selectionBackground":"#44475a","black":"#21222c","red":"#ff5555","green":"#50fa7b","yellow":"#f1fa8c","blue":"#bd93f9","magenta":"#ff79c6","cyan":"#8be9fd","white":"#f8f8f2"}'
+
 # Start ttyd web terminal
-# Authentication is handled by Coolify/Traefik at the reverse proxy level
 echo "Starting ttyd web terminal on port 7681"
-exec ttyd -p 7681 -W /bin/zsh -c 'tmux attach || tmux new-session'
+exec ttyd -p 7681 -W \
+  -t fontSize=16 \
+  -t fontFamily="Menlo, Monaco, Consolas, monospace" \
+  -t "theme=${THEME}" \
+  /bin/zsh -c 'tmux attach || tmux new-session'
