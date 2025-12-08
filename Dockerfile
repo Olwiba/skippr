@@ -59,12 +59,14 @@ RUN npm install -g @anthropic-ai/claude-code
 COPY --chown=dev:dev config/.tmux.conf /home/dev/.tmux.conf
 COPY --chown=dev:dev config/.zshrc /home/dev/.zshrc
 
+# Copy entrypoint script
+COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
+
 # Set working directory to projects
 WORKDIR /home/dev/projects
 
 # Expose ttyd port
 EXPOSE 7681
 
-# Start ttyd with tmux
-# If tmux session exists, attach to it; otherwise create new session
-CMD ["ttyd", "-p", "7681", "-W", "/bin/zsh", "-c", "tmux attach || tmux new-session"]
+# Use entrypoint script to start ttyd with optional authentication
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

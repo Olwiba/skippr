@@ -32,8 +32,15 @@ Skippr gives you a full-featured terminal accessible from your browser. Deploy o
 
 3. **Set environment variables** in Coolify:
    ```bash
+   # Optional: ttyd password (recommended for security)
+   TTYD_USERNAME=admin
+   TTYD_PASSWORD=your-secure-password
+
+   # Optional: Claude Code API key (or authenticate via browser)
    ANTHROPIC_API_KEY=sk-ant-your-key-here
-   TZ=America/New_York  # Optional
+
+   # Optional: Timezone
+   TZ=America/New_York
    ```
 
 4. **Deploy** 🚀
@@ -46,10 +53,10 @@ Open the URL in your browser. You'll land in a zsh shell inside a tmux session.
 
 **Authenticate Claude Code**:
 ```bash
-claude-code
+claude
 ```
 
-Follow the prompts to authenticate with your Anthropic account. This only needs to be done once.
+Follow the browser authentication prompts (uses your Claude.ai Pro plan). This only needs to be done once - credentials persist in the `~/.claude` volume.
 
 ### 3. Start Coding
 
@@ -66,35 +73,55 @@ cd your-project
 bun dev
 
 # Right pane: Start Claude Code
-claude-code
+claude
 ```
 
 ---
 
-## Accessing Dev Servers with Tailscale
+## Security Setup (Recommended)
 
-By default, your dev servers (like `bun dev` on port 3000) are only accessible inside the container. Use Tailscale to securely access them from your phone.
+For production use, secure Skippr with IP whitelisting + password authentication:
 
-### Setup Steps
+### Two-Layer Security
+1. **IP Whitelist** - Only allow access from your Tailscale VPN IP
+2. **Password Auth** - ttyd login prompt as second layer
 
-**1. Install Tailscale in the Skippr container**:
+### Quick Setup
+
+**1. Install Tailscale on your mobile device**
+- Get the app from App Store/Play Store
+- Note your Tailscale IP (e.g., `100.x.x.x`)
+
+**2. Configure IP whitelist in Coolify**
+- Go to skippr → Configuration → General → Network
+- Uncheck "Readonly labels"
+- Add label:
+  ```
+  traefik.http.middlewares.skippr-ipwhitelist.ipallowlist.sourcerange=100.x.x.x/32
+  ```
+- Update existing middleware label to include `skippr-ipwhitelist`
+
+**3. Set password via environment variables**
 ```bash
-curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up
+TTYD_USERNAME=admin
+TTYD_PASSWORD=your-secure-password
 ```
 
-**2. Expose your dev server**:
-```bash
-# If running on port 3000
-tailscale serve https / http://127.0.0.1:3000
-```
+**4. Enable HTTPS**
+- Coolify → Domains → Enable SSL Certificate
 
-**3. Access from your device**:
-- Install Tailscale on your phone
-- Join the same Tailnet
-- Visit `https://skippr.yourtailnet.ts.net`
+Now only you (via Tailscale VPN) can access Skippr, with password protection as backup.
 
-Now you can see your hot-reloading changes in real-time while coding on your phone.
+---
+
+## Accessing Dev Servers
+
+When running dev servers in Skippr (e.g., `bun dev` on port 3000), access them via:
+
+1. **Tailscale VPN** - Your mobile device and Coolify server on same network
+2. **Direct IP access** - `http://[server-tailscale-ip]:3000`
+
+Your hot-reload changes appear instantly while coding from your phone!
 
 ---
 

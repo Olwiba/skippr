@@ -14,7 +14,11 @@ services:
       - skippr-claude:/home/dev/.claude
 
     environment:
-      # Required: Claude Code API Key - set this in Coolify
+      # Required: ttyd authentication
+      - TTYD_USERNAME=${TTYD_USERNAME:-admin}
+      - TTYD_PASSWORD=${TTYD_PASSWORD:-changeme}
+
+      # Optional: Claude Code API Key
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
 
       # Optional: Set timezone
@@ -23,6 +27,8 @@ services:
     # Coolify-compatible labels
     labels:
       - "coolify.managed=true"
+      # IP Whitelist is configured in Coolify UI (Configuration > Network > Container Labels)
+      # This prevents label override issues with docker-compose deployments
 
 volumes:
   skippr-projects:
