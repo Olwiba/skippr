@@ -420,6 +420,74 @@
       return null;
     }
 
+    // Cache the WebSocket once found
+    let cachedSocket = null;
+    let directSocket = null;
+
+    // Create our own WebSocket to ttyd as backup
+    function connectDirectSocket() {
+      if (directSocket && directSocket.readyState === WebSocket.OPEN) {
+        return directSocket;
+      }
+      
+      try {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${location.host}/terminal/ws`;
+        console.log('Connecting direct WebSocket to:', wsUrl);
+        directSocket = new WebSocket(wsUrl);
+        
+        directSocket.binaryType = 'arraybuffer';
+        
+        directSocket.onopen = () => console.log('Direct WebSocket connected!');
+        directSocket.onerror = (e) => console.error('Direct WebSocket error');
+        directSocket.onclose = () => console.log('Direct WebSocket closed');
+        
+        return directSocket;
+      } catch (e) {
+        console.error('Failed to create direct WebSocket:', e.message);
+        return null;
+      }
+    }
+
+    // Try to connect after page loads
+    setTimeout(connectDirectSocket, 1000);
+
+    function findWebSocket(win) {
+      if (cachedSocket && cachedSocket.readyState === WebSocket.OPEN) {
+        return cachedSocket;
+      }
+
+      // Method 1: Check common ttyd locations
+      if (win.socket) return win.socket;
+      if (win.ws) return win.ws;
+      if (win.websocket) return win.websocket;
+      
+      // Method 2: Check if attached to term
+      if (win.term) {
+        if (win.term._socket) return win.term._socket;
+        if (win.term.socket) return win.term.socket;
+        // Check xterm.js internals
+        if (win.term._core && win.term._core._socket) return win.term._core._socket;
+      }
+
+      // Method 3: Find any open WebSocket in the window
+      for (const key of Object.keys(win)) {
+        try {
+          const val = win[key];
+          if (val instanceof WebSocket && val.readyState === WebSocket.OPEN) {
+            console.log('Found WebSocket at window.' + key);
+            return val;
+          }
+        } catch (e) {}
+      }
+
+      // Method 4: Look for ttyd's client object
+      if (win.client && win.client.socket) return win.client.socket;
+      if (win.ttyd && win.ttyd.socket) return win.ttyd.socket;
+
+      return null;
+    }
+
     function sendKey(key, opts = {}) {
       const ansi = keyToAnsi(key, opts);
       if (!ansi) {
@@ -430,36 +498,39 @@
       try {
         const iframeWin = terminalIframe.contentWindow;
         
-        // Method 1: Try to access ttyd's terminal directly
-        // ttyd exposes the terminal as window.term (xterm.js instance)
-        if (iframeWin.term && typeof iframeWin.term.write === 'function') {
-          // For input, we need to use the WebSocket, not term.write
-          // term.write is for output only
+        // Find the WebSocket (try iframe first, then direct connection)
+        let socket = findWebSocket(iframeWin);
+        
+        // Fallback to our direct connection
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          socket = directSocket;
         }
-
-        // Method 2: Access the WebSocket and send data directly
-        // ttyd's WebSocket sends binary data with a command byte prefix
-        // 0 = input, 1 = resize, 2 = pause, 3 = resume
-        if (iframeWin.socket && iframeWin.socket.readyState === WebSocket.OPEN) {
+        
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          cachedSocket = socket;
+          // ttyd protocol: first byte is command (0=input), rest is data
           const encoder = new TextEncoder();
           const data = encoder.encode(ansi);
           const buffer = new Uint8Array(data.length + 1);
           buffer[0] = 0; // input command
           buffer.set(data, 1);
-          iframeWin.socket.send(buffer);
-          console.log('Sent via WebSocket:', key, '->', ansi.split('').map(c => c.charCodeAt(0).toString(16)).join(' '));
+          socket.send(buffer);
+          console.log('Sent:', key, '-> 0x' + ansi.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join(' 0x'));
         } else {
-          // Method 3: Try to find ttyd's send function
-          if (iframeWin.send && typeof iframeWin.send === 'function') {
-            iframeWin.send(ansi);
-            console.log('Sent via send():', key);
+          // Fallback: try using term.paste() for simple characters
+          if (iframeWin.term && key.length === 1 && !opts.ctrl && !opts.alt && !modifiers.ctrl && !modifiers.alt) {
+            iframeWin.term.paste(key);
+            console.log('Pasted:', key);
           } else {
-            console.warn('Cannot find terminal WebSocket. Available:', Object.keys(iframeWin));
+            console.warn('No WebSocket found. term exists:', !!iframeWin.term);
+            // Log what we can access for debugging
+            if (iframeWin.term) {
+              console.log('term keys:', Object.keys(iframeWin.term).slice(0, 20).join(', '));
+            }
           }
         }
       } catch (e) {
-        console.error('Error sending key:', e);
-        // Cross-origin error - we'll need a different approach
+        console.error('Error sending key:', e.message);
       }
 
       // Reset modifiers after sending key (one-shot behavior)
