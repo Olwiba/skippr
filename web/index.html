@@ -53,6 +53,8 @@
       height: 100%;
       border: none;
       background: var(--bg-dark);
+      /* Prevent iframe from capturing touch when interacting with keyboard */
+      touch-action: pan-x pan-y;
     }
 
     /* Keyboard overlay */
@@ -90,6 +92,10 @@
       justify-content: center;
       transition: all 0.1s ease;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
     }
 
     .key:active {
@@ -304,127 +310,175 @@
       updateModifierUI();
     }
 
-    function sendKey(key, opts = {}) {
-      // Get the ttyd terminal - it uses xterm.js
-      // We need to post a message or directly interact with the terminal
-      const iframe = terminalIframe.contentWindow;
+    // Convert key + modifiers to ANSI escape sequence
+    function keyToAnsi(key, opts = {}) {
+      const ctrl = opts.ctrl || modifiers.ctrl;
+      const alt = opts.alt || modifiers.alt;
       
-      // Build the key event options
-      const eventOpts = {
-        key: key,
-        code: `Key${key.toUpperCase()}`,
-        ctrlKey: opts.ctrl || modifiers.ctrl,
-        altKey: opts.alt || modifiers.alt,
-        metaKey: opts.meta || modifiers.meta,
-        shiftKey: opts.shift || false,
-        bubbles: true,
-        cancelable: true
+      // Control key combinations (Ctrl+A = \x01, Ctrl+C = \x03, etc.)
+      if (ctrl && key.length === 1) {
+        const code = key.toUpperCase().charCodeAt(0);
+        if (code >= 65 && code <= 90) { // A-Z
+          return String.fromCharCode(code - 64);
+        }
+      }
+
+      // Alt combinations (send ESC + key)
+      if (alt && key.length === 1) {
+        return '\x1b' + key;
+      }
+
+      // Special keys ANSI sequences
+      const ansiMap = {
+        'Escape': '\x1b',
+        'Tab': '\t',
+        'Enter': '\r',
+        'Backspace': '\x7f',
+        'Delete': '\x1b[3~',
+        'Insert': '\x1b[2~',
+        'Home': '\x1b[H',
+        'End': '\x1b[F',
+        'PageUp': '\x1b[5~',
+        'PageDown': '\x1b[6~',
+        'ArrowUp': '\x1b[A',
+        'ArrowDown': '\x1b[B',
+        'ArrowRight': '\x1b[C',
+        'ArrowLeft': '\x1b[D',
+        'F1': '\x1bOP',
+        'F2': '\x1bOQ',
+        'F3': '\x1bOR',
+        'F4': '\x1bOS',
+        'F5': '\x1b[15~',
+        'F6': '\x1b[17~',
+        'F7': '\x1b[18~',
+        'F8': '\x1b[19~',
+        'F9': '\x1b[20~',
+        'F10': '\x1b[21~',
+        'F11': '\x1b[23~',
+        'F12': '\x1b[24~',
       };
 
-      // Special key codes
-      const specialCodes = {
-        'Escape': 'Escape',
-        'Tab': 'Tab',
-        'ArrowUp': 'ArrowUp',
-        'ArrowDown': 'ArrowDown',
-        'ArrowLeft': 'ArrowLeft',
-        'ArrowRight': 'ArrowRight',
-        'Home': 'Home',
-        'End': 'End',
-        'PageUp': 'PageUp',
-        'PageDown': 'PageDown',
-        'Delete': 'Delete',
-        'Insert': 'Insert',
-        'Backspace': 'Backspace',
-        'Enter': 'Enter'
-      };
+      if (ansiMap[key]) {
+        return ansiMap[key];
+      }
 
-      if (specialCodes[key]) {
-        eventOpts.code = specialCodes[key];
+      // Regular character
+      if (key.length === 1) {
+        return key;
+      }
+
+      return null;
+    }
+
+    function sendKey(key, opts = {}) {
+      const ansi = keyToAnsi(key, opts);
+      if (!ansi) {
+        console.warn('Unknown key:', key);
+        return;
       }
 
       try {
-        // Try to focus the terminal and send key event
-        iframe.focus();
+        const iframeWin = terminalIframe.contentWindow;
         
-        // Create and dispatch keyboard event to iframe
-        const keydownEvent = new KeyboardEvent('keydown', eventOpts);
-        iframe.document.dispatchEvent(keydownEvent);
-        
-        // For printable characters, also send keypress
-        if (key.length === 1) {
-          const keypressEvent = new KeyboardEvent('keypress', {
-            ...eventOpts,
-            charCode: key.charCodeAt(0)
-          });
-          iframe.document.dispatchEvent(keypressEvent);
+        // Method 1: Try to access ttyd's terminal directly
+        // ttyd exposes the terminal as window.term (xterm.js instance)
+        if (iframeWin.term && typeof iframeWin.term.write === 'function') {
+          // For input, we need to use the WebSocket, not term.write
+          // term.write is for output only
+        }
+
+        // Method 2: Access the WebSocket and send data directly
+        // ttyd's WebSocket sends binary data with a command byte prefix
+        // 0 = input, 1 = resize, 2 = pause, 3 = resume
+        if (iframeWin.socket && iframeWin.socket.readyState === WebSocket.OPEN) {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(ansi);
+          const buffer = new Uint8Array(data.length + 1);
+          buffer[0] = 0; // input command
+          buffer.set(data, 1);
+          iframeWin.socket.send(buffer);
+          console.log('Sent via WebSocket:', key, '->', ansi.split('').map(c => c.charCodeAt(0).toString(16)).join(' '));
+        } else {
+          // Method 3: Try to find ttyd's send function
+          if (iframeWin.send && typeof iframeWin.send === 'function') {
+            iframeWin.send(ansi);
+            console.log('Sent via send():', key);
+          } else {
+            console.warn('Cannot find terminal WebSocket. Available:', Object.keys(iframeWin));
+          }
         }
       } catch (e) {
-        // Cross-origin - fall back to postMessage if ttyd supports it
-        console.log('Sending key via postMessage:', key, eventOpts);
-        iframe.postMessage({
-          type: 'keydown',
-          key: key,
-          ...eventOpts
-        }, '*');
+        console.error('Error sending key:', e);
+        // Cross-origin error - we'll need a different approach
       }
 
       // Reset modifiers after sending key (one-shot behavior)
       resetModifiers();
     }
 
-    // Handle modifier button clicks
-    document.querySelectorAll('[data-modifier]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
+    // Touch event handler - prevents default and handles press
+    function handleKeyPress(btn, e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Visual feedback
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 100);
+
+      if (btn.dataset.modifier) {
         const mod = btn.dataset.modifier;
         modifiers[mod] = !modifiers[mod];
         updateModifierUI();
-      });
-    });
-
-    // Handle regular key clicks
-    document.querySelectorAll('[data-key]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        sendKey(btn.dataset.key);
-      });
-    });
-
-    // Handle combo buttons (like ^C, ^D)
-    document.querySelectorAll('[data-combo]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
+      } else if (btn.dataset.combo) {
         const combo = btn.dataset.combo;
         const parts = combo.split('+');
         const key = parts.pop();
         const opts = {};
         parts.forEach(mod => opts[mod] = true);
         sendKey(key, opts);
-      });
+      } else if (btn.dataset.key) {
+        sendKey(btn.dataset.key);
+      }
+    }
+
+    // Attach touch handlers to all keys
+    document.querySelectorAll('.key').forEach(btn => {
+      // Use touchstart for immediate response on mobile
+      btn.addEventListener('touchstart', (e) => handleKeyPress(btn, e), { passive: false });
+      
+      // Also handle click for desktop/testing
+      btn.addEventListener('click', (e) => handleKeyPress(btn, e));
+      
+      // Prevent touchend from triggering click
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, { passive: false });
     });
 
     // Toggle keyboard visibility
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       keyboard.classList.remove('hidden');
     });
-
-    // Double-tap to hide keyboard
-    let lastTap = 0;
-    keyboard.addEventListener('touchend', (e) => {
-      if (e.target.classList.contains('status-bar') || e.target.closest('.status-bar')) {
-        const now = Date.now();
-        if (now - lastTap < 300) {
-          keyboard.classList.add('hidden');
-        }
-        lastTap = now;
-      }
-    });
-
-    // Prevent zoom on double-tap
-    document.addEventListener('touchend', (e) => {
+    toggleBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      keyboard.classList.remove('hidden');
     }, { passive: false });
+
+    // Double-tap status bar to hide keyboard
+    let lastTap = 0;
+    document.querySelector('.status-bar').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        keyboard.classList.add('hidden');
+      }
+      lastTap = now;
+    }, { passive: false });
+
+    // Prevent default touch behaviors on the keyboard overlay
+    keyboard.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
   </script>
 </body>
 </html>
