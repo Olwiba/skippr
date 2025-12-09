@@ -198,27 +198,9 @@
       }
     }
 
-    /* Debug console */
-    #debug {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      max-height: 120px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.9);
-      color: #0f0;
-      font-family: monospace;
-      font-size: 10px;
-      padding: 4px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-    #debug.hidden { display: none; }
   </style>
 </head>
 <body>
-  <div id="debug"></div>
   <div class="container">
     <div class="terminal-wrapper">
       <iframe id="terminal" src="/terminal/"></iframe>
@@ -290,37 +272,6 @@
   </div>
 
   <script>
-    // Debug console for mobile
-    const debugEl = document.getElementById('debug');
-    const origLog = console.log;
-    const origWarn = console.warn;
-    const origError = console.error;
-    
-    function debugLog(prefix, ...args) {
-      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-      debugEl.innerHTML += `<div>${prefix} ${msg}</div>`;
-      debugEl.scrollTop = debugEl.scrollHeight;
-    }
-    
-    console.log = (...args) => { origLog(...args); debugLog('📝', ...args); };
-    console.warn = (...args) => { origWarn(...args); debugLog('⚠️', ...args); };
-    console.error = (...args) => { origError(...args); debugLog('❌', ...args); };
-    
-    // Triple-tap anywhere to toggle debug
-    let tapCount = 0;
-    let tapTimer = null;
-    document.addEventListener('touchstart', () => {
-      tapCount++;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(() => { tapCount = 0; }, 500);
-      if (tapCount === 3) {
-        debugEl.classList.toggle('hidden');
-        tapCount = 0;
-      }
-    }, { passive: true });
-
-    console.log('Skippr loaded');
-
     const keyboard = document.getElementById('keyboard');
     const toggleBtn = document.getElementById('toggle-keyboard');
     const terminalIframe = document.getElementById('terminal');
@@ -420,179 +371,57 @@
       return null;
     }
 
-    // Cache the WebSocket once found
-    let cachedSocket = null;
-    let directSocket = null;
-
-    // Create our own WebSocket to ttyd as backup
-    function connectDirectSocket() {
-      if (directSocket && directSocket.readyState === WebSocket.OPEN) {
-        return directSocket;
-      }
-      
-      try {
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${location.host}/terminal/ws`;
-        console.log('Connecting direct WebSocket to:', wsUrl);
-        directSocket = new WebSocket(wsUrl);
-        
-        directSocket.binaryType = 'arraybuffer';
-        
-        directSocket.onopen = () => console.log('Direct WebSocket connected!');
-        directSocket.onerror = (e) => console.error('Direct WebSocket error');
-        directSocket.onclose = () => console.log('Direct WebSocket closed');
-        
-        return directSocket;
-      } catch (e) {
-        console.error('Failed to create direct WebSocket:', e.message);
-        return null;
-      }
-    }
-
-    // Don't auto-connect direct socket - it creates a separate PTY session
-    // Only use as last resort if iframe socket truly can't be found
-    // setTimeout(connectDirectSocket, 1000);
-
-    function findWebSocket(win) {
-      if (cachedSocket && cachedSocket.readyState === WebSocket.OPEN) {
-        return cachedSocket;
-      }
-
-      // Method 1: Check common ttyd locations
-      if (win.socket) return win.socket;
-      if (win.ws) return win.ws;
-      if (win.websocket) return win.websocket;
-      
-      // Method 2: Deep search through term object
-      if (win.term) {
-        console.log('Searching term object...');
-        
-        // Direct properties
-        const termKeys = Object.keys(win.term);
-        console.log('term keys:', termKeys.join(', '));
-        
-        // Check _core (xterm internals)
-        if (win.term._core) {
-          const coreKeys = Object.keys(win.term._core);
-          console.log('term._core keys:', coreKeys.slice(0, 30).join(', '));
-        }
-        
-        // Check _addonManager for attach addon
-        if (win.term._addonManager) {
-          console.log('Has _addonManager');
-          const addons = win.term._addonManager._addons;
-          if (addons) {
-            addons.forEach((addon, i) => {
-              console.log(`Addon ${i}:`, Object.keys(addon.instance || addon).slice(0, 10).join(', '));
-              // AttachAddon stores socket
-              if (addon.instance && addon.instance._socket) {
-                cachedSocket = addon.instance._socket;
-              }
-            });
-          }
-        }
-        
-        // Check loadedAddons
-        if (win.term.loadedAddons) {
-          Object.keys(win.term.loadedAddons).forEach(name => {
-            const addon = win.term.loadedAddons[name];
-            console.log(`Loaded addon ${name}:`, Object.keys(addon).slice(0, 10).join(', '));
-            if (addon._socket) cachedSocket = addon._socket;
-            if (addon.socket) cachedSocket = addon.socket;
-          });
-        }
-
-        if (cachedSocket) return cachedSocket;
-      }
-
-      // Method 3: Find any open WebSocket by scanning ALL properties recursively
-      const searched = new Set();
-      function deepSearch(obj, path, depth) {
-        if (depth > 3 || !obj || searched.has(obj)) return null;
-        searched.add(obj);
-        
-        try {
-          if (obj instanceof WebSocket && obj.readyState === WebSocket.OPEN) {
-            console.log('Found WebSocket at:', path);
-            return obj;
-          }
-          
-          for (const key of Object.keys(obj)) {
-            if (key.startsWith('_') || key === 'window' || key === 'parent' || key === 'top' || key === 'frames') {
-              // Check underscore props (private) but skip circular refs
-              if (key.toLowerCase().includes('socket') || key.toLowerCase().includes('ws')) {
-                const val = obj[key];
-                if (val instanceof WebSocket && val.readyState === WebSocket.OPEN) {
-                  console.log('Found WebSocket at:', path + '.' + key);
-                  return val;
-                }
-              }
-              continue;
-            }
-            const val = obj[key];
-            if (val && typeof val === 'object') {
-              const found = deepSearch(val, path + '.' + key, depth + 1);
-              if (found) return found;
-            }
-          }
-        } catch (e) {}
-        return null;
-      }
-
-      const found = deepSearch(win, 'window', 0);
-      if (found) return found;
-
-      // Method 4: Look for ttyd's client object
-      if (win.client && win.client.socket) return win.client.socket;
-      if (win.ttyd && win.ttyd.socket) return win.ttyd.socket;
-
-      return null;
-    }
-
     function sendKey(key, opts = {}) {
       const ansi = keyToAnsi(key, opts);
-      if (!ansi) {
-        console.warn('Unknown key:', key);
-        return;
-      }
+      if (!ansi) return;
 
       try {
-        const iframeWin = terminalIframe.contentWindow;
-        const term = iframeWin.term;
-        
-        if (!term) {
-          console.error('No terminal found');
-          return;
-        }
+        const term = terminalIframe.contentWindow?.term;
+        if (!term) return;
 
-        let sent = false;
-
-        // Method 1: Trigger onData event via coreService
-        // ttyd listens to term.onData and forwards to WebSocket
+        // Trigger onData event - ttyd listens to this and forwards to WebSocket
         if (term._core?.coreService?.triggerDataEvent) {
           term._core.coreService.triggerDataEvent(ansi);
-          console.log('Sent via triggerDataEvent:', key);
-          sent = true;
-        }
-        // Method 2: Fire _onData emitter directly  
-        else if (term._core?._onData?.fire) {
+        } else if (term._core?._onData?.fire) {
           term._core._onData.fire(ansi);
-          console.log('Sent via _onData.fire:', key);
-          sent = true;
-        }
-        
-        // Method 3: Try paste for any input as fallback
-        if (!sent) {
+        } else {
           term.paste(ansi);
-          console.log('Sent via paste:', key);
         }
-      } catch (e) {
-        console.error('Error sending key:', e.message);
-      }
+      } catch (e) {}
 
       // Reset modifiers after sending key (one-shot behavior)
       resetModifiers();
     }
+
+    // Intercept keyboard events from iframe to apply overlay modifiers
+    function setupKeyboardInterception() {
+      try {
+        const iframeWin = terminalIframe.contentWindow;
+        const iframeDoc = iframeWin.document;
+        
+        iframeDoc.addEventListener('keydown', (e) => {
+          // If any overlay modifier is active, intercept and send with modifier
+          if (modifiers.ctrl || modifiers.alt || modifiers.meta) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const key = e.key;
+            if (key.length === 1 || ['Escape', 'Tab', 'Enter', 'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+              sendKey(key);
+            }
+            return false;
+          }
+        }, true); // Use capture phase
+      } catch (e) {
+        // Cross-origin or iframe not ready - retry
+        setTimeout(setupKeyboardInterception, 500);
+      }
+    }
+
+    // Setup interception when iframe loads
+    terminalIframe.addEventListener('load', () => {
+      setTimeout(setupKeyboardInterception, 500);
+    });
 
     // Touch event handler - prevents default and handles press
     function handleKeyPress(btn, e) {
