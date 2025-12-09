@@ -23,9 +23,10 @@ Skippr runs as a single Docker container with:
 Separate volumes for each persistent path (allows config updates on redeploy):
 - `~/projects/` - All user projects
 - `~/.claude/` - Claude Code auth and configuration
-- `~/.ssh/` - SSH keys
 - `~/.gitconfig` - Git identity
 - `~/.zsh_history` - Command history
+
+SSH keys are managed via Coolify's SSH settings, not a container volume.
 
 ### External Dependencies
 

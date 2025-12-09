@@ -11,7 +11,6 @@ services:
       # Persistent storage - keeps data across redeployments
       - skippr-projects:/home/dev/projects
       - skippr-claude:/home/dev/.claude
-      - skippr-ssh:/home/dev/.ssh
       - skippr-gitconfig:/home/dev/.gitconfig
       - skippr-zsh-history:/home/dev/.zsh_history
 
@@ -32,8 +31,6 @@ volumes:
   skippr-projects:
     driver: local
   skippr-claude:
-    driver: local
-  skippr-ssh:
     driver: local
   skippr-gitconfig:
     driver: local
