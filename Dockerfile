@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     ca-certificates \
     unzip \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 22 (LTS)
@@ -28,11 +29,16 @@ RUN curl -fsSL https://bun.sh/install | bash \
 RUN wget -qO /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.aarch64 \
     && chmod +x /usr/local/bin/ttyd
 
+# Copy web files for mobile keyboard overlay (before user switch)
+COPY web/index.html /var/www/html/index.html
+COPY web/nginx.conf /etc/nginx/nginx.conf
+
 # Create non-root user
 RUN useradd -m -s /bin/zsh dev \
     && mkdir -p /home/dev/projects \
     && mkdir -p /home/dev/.claude \
-    && chown -R dev:dev /home/dev
+    && chown -R dev:dev /home/dev \
+    && chown -R dev:dev /var/www/html
 
 # Switch to dev user
 USER dev
@@ -65,8 +71,8 @@ COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
 # Set working directory to projects
 WORKDIR /home/dev/projects
 
-# Expose ttyd port
-EXPOSE 7681
+# Expose nginx port (public) - ttyd stays internal on 7681
+EXPOSE 8080
 
 # Use entrypoint script to start ttyd with optional authentication
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

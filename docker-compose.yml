@@ -5,13 +5,15 @@ services:
     restart: unless-stopped
 
     ports:
-      - "7681:7681"
+      - "7681:8080"
 
     volumes:
-      # Persistent project directory
+      # Persistent storage - keeps data across redeployments
       - skippr-projects:/home/dev/projects
-      # Persistent Claude Code config and auth
       - skippr-claude:/home/dev/.claude
+      - skippr-ssh:/home/dev/.ssh
+      - skippr-gitconfig:/home/dev/.gitconfig
+      - skippr-zsh-history:/home/dev/.zsh_history
 
     environment:
       # Optional: Claude Code API Key
@@ -30,4 +32,10 @@ volumes:
   skippr-projects:
     driver: local
   skippr-claude:
+    driver: local
+  skippr-ssh:
+    driver: local
+  skippr-gitconfig:
+    driver: local
+  skippr-zsh-history:
     driver: local

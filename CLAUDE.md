@@ -14,14 +14,18 @@ Skippr runs as a single Docker container with:
 - **Base**: Ubuntu 24.04
 - **Runtime**: Node.js 22 LTS + Bun (latest)
 - **CLI Tools**: Claude Code CLI, Git, tmux, zsh
-- **Web Terminal**: ttyd (port 7681)
+- **Web Server**: nginx (port 8080) - serves mobile keyboard overlay
+- **Web Terminal**: ttyd (port 7681 internal, proxied via nginx at /terminal/)
 - **User**: Non-root user "dev" with home at `/home/dev`
 
 ### Data Persistence
 
-Two volumes maintain state across restarts:
+Separate volumes for each persistent path (allows config updates on redeploy):
 - `~/projects/` - All user projects
 - `~/.claude/` - Claude Code auth and configuration
+- `~/.ssh/` - SSH keys
+- `~/.gitconfig` - Git identity
+- `~/.zsh_history` - Command history
 
 ### External Dependencies
 
@@ -88,10 +92,19 @@ Users typically:
 - **Explicit over implicit**: Clear configuration with comments
 - **Minimal configs**: Only include what's needed, no bloat
 
+## Mobile Keyboard Overlay
+
+The web UI (served by nginx) includes a keyboard overlay for mobile devices:
+- Modifier keys: Ctrl, Alt, Meta
+- Special keys: Esc, Tab, arrows, Home/End, PgUp/PgDn
+- Quick combos: ^C, ^D, ^Z, ^A, ^L, ^R
+- Hidden on desktop, visible on touch devices
+- Double-tap status bar to hide overlay
+
 ## Important Notes
 
 - Never install databases in the container - they're external Coolify services
-- ttyd must start automatically via CMD in Dockerfile
+- nginx and ttyd start automatically via entrypoint.sh
 - tmux should auto-attach if session exists, otherwise create new
 - All configs should work well on mobile keyboards (hence C-a prefix)
 - Keep the image lean - only install necessary tools
@@ -102,9 +115,13 @@ Users typically:
 skippr/
 ├── Dockerfile              # Container definition
 ├── docker-compose.yml      # Coolify deployment config
+├── entrypoint.sh           # Container startup script
 ├── config/
 │   ├── .tmux.conf          # Tmux configuration
 │   └── .zshrc              # Zsh configuration
+├── web/
+│   ├── index.html          # Mobile keyboard overlay wrapper
+│   └── nginx.conf          # nginx configuration
 ├── CLAUDE.md               # This file
 └── README.md               # User-facing documentation
 ```

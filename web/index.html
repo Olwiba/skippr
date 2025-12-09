@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Skippr</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-dark: #0d1117;
+      --bg-overlay: #161b22;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.3);
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --key-bg: #21262d;
+      --key-active: #388bfd;
+      --modifier-active: #238636;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-dark);
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+    }
+
+    /* Terminal iframe */
+    .terminal-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .terminal-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: var(--bg-dark);
+    }
+
+    /* Keyboard overlay */
+    .keyboard-overlay {
+      background: var(--bg-overlay);
+      border-top: 1px solid var(--border);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .key {
+      min-width: 44px;
+      height: 40px;
+      padding: 0 12px;
+      background: var(--key-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .key:active {
+      background: var(--key-active);
+      transform: scale(0.95);
+    }
+
+    .key.modifier {
+      background: linear-gradient(180deg, #2d333b 0%, #22272e 100%);
+      min-width: 52px;
+    }
+
+    .key.modifier.active {
+      background: var(--modifier-active);
+      border-color: #2ea043;
+      box-shadow: 0 0 8px rgba(46, 160, 67, 0.4);
+    }
+
+    .key.wide {
+      min-width: 64px;
+    }
+
+    .key.extra-wide {
+      flex: 1;
+      max-width: 100px;
+    }
+
+    .key .sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    /* Arrow keys cluster */
+    .arrow-cluster {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      grid-template-rows: repeat(2, 36px);
+      gap: 4px;
+    }
+
+    .arrow-cluster .key {
+      min-width: unset;
+      width: 40px;
+      height: 36px;
+      padding: 0;
+    }
+
+    .arrow-cluster .key.up { grid-column: 2; }
+    .arrow-cluster .key.left { grid-column: 1; grid-row: 2; }
+    .arrow-cluster .key.down { grid-column: 2; grid-row: 2; }
+    .arrow-cluster .key.right { grid-column: 3; grid-row: 2; }
+
+    /* Visual indicator for modifier state */
+    .status-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 4px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .status-bar .active-mod {
+      color: var(--modifier-active);
+      font-weight: 600;
+    }
+
+    /* Hide overlay toggle button */
+    .toggle-btn {
+      position: fixed;
+      bottom: 8px;
+      right: 8px;
+      width: 44px;
+      height: 44px;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 100;
+      display: none;
+    }
+
+    .keyboard-overlay.hidden {
+      display: none;
+    }
+
+    .keyboard-overlay.hidden ~ .toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Desktop: hide overlay by default */
+    @media (min-width: 768px) and (pointer: fine) {
+      .keyboard-overlay {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="terminal-wrapper">
+      <iframe id="terminal" src="/terminal/"></iframe>
+    </div>
+
+    <div class="keyboard-overlay" id="keyboard">
+      <div class="status-bar">
+        <span id="status-ctrl">CTRL</span>
+        <span id="status-alt">ALT</span>
+        <span id="status-meta">META</span>
+      </div>
+
+      <div class="key-row">
+        <button class="key modifier" data-modifier="ctrl" id="key-ctrl">Ctrl</button>
+        <button class="key modifier" data-modifier="alt" id="key-alt">Alt</button>
+        <button class="key modifier" data-modifier="meta" id="key-meta">⌘</button>
+        <button class="key wide" data-key="Escape">Esc</button>
+        <button class="key wide" data-key="Tab">Tab</button>
+      </div>
+
+      <div class="key-row">
+        <button class="key" data-key="1" data-shift="!">1</button>
+        <button class="key" data-key="2" data-shift="@">2</button>
+        <button class="key" data-key="3" data-shift="#">3</button>
+        <button class="key" data-key="4" data-shift="$">4</button>
+        <button class="key" data-key="5" data-shift="%">5</button>
+        <button class="key" data-key="`" data-shift="~">`</button>
+        <button class="key" data-key="-" data-shift="_">-</button>
+        <button class="key" data-key="=" data-shift="+">+</button>
+      </div>
+
+      <div class="key-row">
+        <button class="key" data-key="[" data-shift="{">[</button>
+        <button class="key" data-key="]" data-shift="}">]</button>
+        <button class="key" data-key="\" data-shift="|">\</button>
+        <button class="key" data-key=";" data-shift=":">;</button>
+        <button class="key" data-key="'" data-shift='"'>'</button>
+        <button class="key" data-key="/" data-shift="?">/</button>
+
+        <div class="arrow-cluster">
+          <button class="key up" data-key="ArrowUp">↑</button>
+          <button class="key left" data-key="ArrowLeft">←</button>
+          <button class="key down" data-key="ArrowDown">↓</button>
+          <button class="key right" data-key="ArrowRight">→</button>
+        </div>
+      </div>
+
+      <div class="key-row">
+        <button class="key" data-key="Home">Home</button>
+        <button class="key" data-key="End">End</button>
+        <button class="key" data-key="PageUp">PgUp</button>
+        <button class="key" data-key="PageDown">PgDn</button>
+        <button class="key" data-key="Delete">Del</button>
+        <button class="key" data-key="Insert">Ins</button>
+      </div>
+
+      <div class="key-row">
+        <!-- Common Ctrl combos for convenience -->
+        <button class="key" data-combo="ctrl+c">^C</button>
+        <button class="key" data-combo="ctrl+d">^D</button>
+        <button class="key" data-combo="ctrl+z">^Z</button>
+        <button class="key" data-combo="ctrl+a">^A</button>
+        <button class="key" data-combo="ctrl+l">^L</button>
+        <button class="key" data-combo="ctrl+r">^R</button>
+      </div>
+    </div>
+
+    <button class="toggle-btn" id="toggle-keyboard">⌨</button>
+  </div>
+
+  <script>
+    const keyboard = document.getElementById('keyboard');
+    const toggleBtn = document.getElementById('toggle-keyboard');
+    const terminalIframe = document.getElementById('terminal');
+
+    // Modifier state
+    const modifiers = {
+      ctrl: false,
+      alt: false,
+      meta: false
+    };
+
+    // Status indicators
+    const statusElements = {
+      ctrl: document.getElementById('status-ctrl'),
+      alt: document.getElementById('status-alt'),
+      meta: document.getElementById('status-meta')
+    };
+
+    function updateModifierUI() {
+      Object.keys(modifiers).forEach(mod => {
+        const btn = document.getElementById(`key-${mod}`);
+        const status = statusElements[mod];
+        if (modifiers[mod]) {
+          btn?.classList.add('active');
+          status?.classList.add('active-mod');
+        } else {
+          btn?.classList.remove('active');
+          status?.classList.remove('active-mod');
+        }
+      });
+    }
+
+    function resetModifiers() {
+      modifiers.ctrl = false;
+      modifiers.alt = false;
+      modifiers.meta = false;
+      updateModifierUI();
+    }
+
+    function sendKey(key, opts = {}) {
+      // Get the ttyd terminal - it uses xterm.js
+      // We need to post a message or directly interact with the terminal
+      const iframe = terminalIframe.contentWindow;
+      
+      // Build the key event options
+      const eventOpts = {
+        key: key,
+        code: `Key${key.toUpperCase()}`,
+        ctrlKey: opts.ctrl || modifiers.ctrl,
+        altKey: opts.alt || modifiers.alt,
+        metaKey: opts.meta || modifiers.meta,
+        shiftKey: opts.shift || false,
+        bubbles: true,
+        cancelable: true
+      };
+
+      // Special key codes
+      const specialCodes = {
+        'Escape': 'Escape',
+        'Tab': 'Tab',
+        'ArrowUp': 'ArrowUp',
+        'ArrowDown': 'ArrowDown',
+        'ArrowLeft': 'ArrowLeft',
+        'ArrowRight': 'ArrowRight',
+        'Home': 'Home',
+        'End': 'End',
+        'PageUp': 'PageUp',
+        'PageDown': 'PageDown',
+        'Delete': 'Delete',
+        'Insert': 'Insert',
+        'Backspace': 'Backspace',
+        'Enter': 'Enter'
+      };
+
+      if (specialCodes[key]) {
+        eventOpts.code = specialCodes[key];
+      }
+
+      try {
+        // Try to focus the terminal and send key event
+        iframe.focus();
+        
+        // Create and dispatch keyboard event to iframe
+        const keydownEvent = new KeyboardEvent('keydown', eventOpts);
+        iframe.document.dispatchEvent(keydownEvent);
+        
+        // For printable characters, also send keypress
+        if (key.length === 1) {
+          const keypressEvent = new KeyboardEvent('keypress', {
+            ...eventOpts,
+            charCode: key.charCodeAt(0)
+          });
+          iframe.document.dispatchEvent(keypressEvent);
+        }
+      } catch (e) {
+        // Cross-origin - fall back to postMessage if ttyd supports it
+        console.log('Sending key via postMessage:', key, eventOpts);
+        iframe.postMessage({
+          type: 'keydown',
+          key: key,
+          ...eventOpts
+        }, '*');
+      }
+
+      // Reset modifiers after sending key (one-shot behavior)
+      resetModifiers();
+    }
+
+    // Handle modifier button clicks
+    document.querySelectorAll('[data-modifier]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mod = btn.dataset.modifier;
+        modifiers[mod] = !modifiers[mod];
+        updateModifierUI();
+      });
+    });
+
+    // Handle regular key clicks
+    document.querySelectorAll('[data-key]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        sendKey(btn.dataset.key);
+      });
+    });
+
+    // Handle combo buttons (like ^C, ^D)
+    document.querySelectorAll('[data-combo]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const combo = btn.dataset.combo;
+        const parts = combo.split('+');
+        const key = parts.pop();
+        const opts = {};
+        parts.forEach(mod => opts[mod] = true);
+        sendKey(key, opts);
+      });
+    });
+
+    // Toggle keyboard visibility
+    toggleBtn.addEventListener('click', () => {
+      keyboard.classList.remove('hidden');
+    });
+
+    // Double-tap to hide keyboard
+    let lastTap = 0;
+    keyboard.addEventListener('touchend', (e) => {
+      if (e.target.classList.contains('status-bar') || e.target.closest('.status-bar')) {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          keyboard.classList.add('hidden');
+        }
+        lastTap = now;
+      }
+    });
+
+    // Prevent zoom on double-tap
+    document.addEventListener('touchend', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+</html>
+
