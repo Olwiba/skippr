@@ -449,8 +449,9 @@
       }
     }
 
-    // Try to connect after page loads
-    setTimeout(connectDirectSocket, 1000);
+    // Don't auto-connect direct socket - it creates a separate PTY session
+    // Only use as last resort if iframe socket truly can't be found
+    // setTimeout(connectDirectSocket, 1000);
 
     function findWebSocket(win) {
       if (cachedSocket && cachedSocket.readyState === WebSocket.OPEN) {
@@ -462,24 +463,84 @@
       if (win.ws) return win.ws;
       if (win.websocket) return win.websocket;
       
-      // Method 2: Check if attached to term
+      // Method 2: Deep search through term object
       if (win.term) {
-        if (win.term._socket) return win.term._socket;
-        if (win.term.socket) return win.term.socket;
-        // Check xterm.js internals
-        if (win.term._core && win.term._core._socket) return win.term._core._socket;
+        console.log('Searching term object...');
+        
+        // Direct properties
+        const termKeys = Object.keys(win.term);
+        console.log('term keys:', termKeys.join(', '));
+        
+        // Check _core (xterm internals)
+        if (win.term._core) {
+          const coreKeys = Object.keys(win.term._core);
+          console.log('term._core keys:', coreKeys.slice(0, 30).join(', '));
+        }
+        
+        // Check _addonManager for attach addon
+        if (win.term._addonManager) {
+          console.log('Has _addonManager');
+          const addons = win.term._addonManager._addons;
+          if (addons) {
+            addons.forEach((addon, i) => {
+              console.log(`Addon ${i}:`, Object.keys(addon.instance || addon).slice(0, 10).join(', '));
+              // AttachAddon stores socket
+              if (addon.instance && addon.instance._socket) {
+                cachedSocket = addon.instance._socket;
+              }
+            });
+          }
+        }
+        
+        // Check loadedAddons
+        if (win.term.loadedAddons) {
+          Object.keys(win.term.loadedAddons).forEach(name => {
+            const addon = win.term.loadedAddons[name];
+            console.log(`Loaded addon ${name}:`, Object.keys(addon).slice(0, 10).join(', '));
+            if (addon._socket) cachedSocket = addon._socket;
+            if (addon.socket) cachedSocket = addon.socket;
+          });
+        }
+
+        if (cachedSocket) return cachedSocket;
       }
 
-      // Method 3: Find any open WebSocket in the window
-      for (const key of Object.keys(win)) {
+      // Method 3: Find any open WebSocket by scanning ALL properties recursively
+      const searched = new Set();
+      function deepSearch(obj, path, depth) {
+        if (depth > 3 || !obj || searched.has(obj)) return null;
+        searched.add(obj);
+        
         try {
-          const val = win[key];
-          if (val instanceof WebSocket && val.readyState === WebSocket.OPEN) {
-            console.log('Found WebSocket at window.' + key);
-            return val;
+          if (obj instanceof WebSocket && obj.readyState === WebSocket.OPEN) {
+            console.log('Found WebSocket at:', path);
+            return obj;
+          }
+          
+          for (const key of Object.keys(obj)) {
+            if (key.startsWith('_') || key === 'window' || key === 'parent' || key === 'top' || key === 'frames') {
+              // Check underscore props (private) but skip circular refs
+              if (key.toLowerCase().includes('socket') || key.toLowerCase().includes('ws')) {
+                const val = obj[key];
+                if (val instanceof WebSocket && val.readyState === WebSocket.OPEN) {
+                  console.log('Found WebSocket at:', path + '.' + key);
+                  return val;
+                }
+              }
+              continue;
+            }
+            const val = obj[key];
+            if (val && typeof val === 'object') {
+              const found = deepSearch(val, path + '.' + key, depth + 1);
+              if (found) return found;
+            }
           }
         } catch (e) {}
+        return null;
       }
+
+      const found = deepSearch(win, 'window', 0);
+      if (found) return found;
 
       // Method 4: Look for ttyd's client object
       if (win.client && win.client.socket) return win.client.socket;
@@ -498,13 +559,8 @@
       try {
         const iframeWin = terminalIframe.contentWindow;
         
-        // Find the WebSocket (try iframe first, then direct connection)
+        // Find the WebSocket in iframe
         let socket = findWebSocket(iframeWin);
-        
-        // Fallback to our direct connection
-        if (!socket || socket.readyState !== WebSocket.OPEN) {
-          socket = directSocket;
-        }
         
         if (socket && socket.readyState === WebSocket.OPEN) {
           cachedSocket = socket;
