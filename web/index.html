@@ -558,32 +558,33 @@
 
       try {
         const iframeWin = terminalIframe.contentWindow;
+        const term = iframeWin.term;
         
-        // Find the WebSocket in iframe
-        let socket = findWebSocket(iframeWin);
+        if (!term) {
+          console.error('No terminal found');
+          return;
+        }
+
+        let sent = false;
+
+        // Method 1: Trigger onData event via coreService
+        // ttyd listens to term.onData and forwards to WebSocket
+        if (term._core?.coreService?.triggerDataEvent) {
+          term._core.coreService.triggerDataEvent(ansi);
+          console.log('Sent via triggerDataEvent:', key);
+          sent = true;
+        }
+        // Method 2: Fire _onData emitter directly  
+        else if (term._core?._onData?.fire) {
+          term._core._onData.fire(ansi);
+          console.log('Sent via _onData.fire:', key);
+          sent = true;
+        }
         
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          cachedSocket = socket;
-          // ttyd protocol: first byte is command (0=input), rest is data
-          const encoder = new TextEncoder();
-          const data = encoder.encode(ansi);
-          const buffer = new Uint8Array(data.length + 1);
-          buffer[0] = 0; // input command
-          buffer.set(data, 1);
-          socket.send(buffer);
-          console.log('Sent:', key, '-> 0x' + ansi.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join(' 0x'));
-        } else {
-          // Fallback: try using term.paste() for simple characters
-          if (iframeWin.term && key.length === 1 && !opts.ctrl && !opts.alt && !modifiers.ctrl && !modifiers.alt) {
-            iframeWin.term.paste(key);
-            console.log('Pasted:', key);
-          } else {
-            console.warn('No WebSocket found. term exists:', !!iframeWin.term);
-            // Log what we can access for debugging
-            if (iframeWin.term) {
-              console.log('term keys:', Object.keys(iframeWin.term).slice(0, 20).join(', '));
-            }
-          }
+        // Method 3: Try paste for any input as fallback
+        if (!sent) {
+          term.paste(ansi);
+          console.log('Sent via paste:', key);
         }
       } catch (e) {
         console.error('Error sending key:', e.message);
