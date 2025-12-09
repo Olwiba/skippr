@@ -197,9 +197,28 @@
         display: none;
       }
     }
+
+    /* Debug console */
+    #debug {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      max-height: 120px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.9);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 10px;
+      padding: 4px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    #debug.hidden { display: none; }
   </style>
 </head>
 <body>
+  <div id="debug"></div>
   <div class="container">
     <div class="terminal-wrapper">
       <iframe id="terminal" src="/terminal/"></iframe>
@@ -271,6 +290,37 @@
   </div>
 
   <script>
+    // Debug console for mobile
+    const debugEl = document.getElementById('debug');
+    const origLog = console.log;
+    const origWarn = console.warn;
+    const origError = console.error;
+    
+    function debugLog(prefix, ...args) {
+      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      debugEl.innerHTML += `<div>${prefix} ${msg}</div>`;
+      debugEl.scrollTop = debugEl.scrollHeight;
+    }
+    
+    console.log = (...args) => { origLog(...args); debugLog('📝', ...args); };
+    console.warn = (...args) => { origWarn(...args); debugLog('⚠️', ...args); };
+    console.error = (...args) => { origError(...args); debugLog('❌', ...args); };
+    
+    // Triple-tap anywhere to toggle debug
+    let tapCount = 0;
+    let tapTimer = null;
+    document.addEventListener('touchstart', () => {
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => { tapCount = 0; }, 500);
+      if (tapCount === 3) {
+        debugEl.classList.toggle('hidden');
+        tapCount = 0;
+      }
+    }, { passive: true });
+
+    console.log('Skippr loaded');
+
     const keyboard = document.getElementById('keyboard');
     const toggleBtn = document.getElementById('toggle-keyboard');
     const terminalIframe = document.getElementById('terminal');
