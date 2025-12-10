@@ -51,6 +51,16 @@ alias cc='claude'
 
 # Environment message on login
 if [[ -o interactive ]]; then
-    echo "Welcome to Skippr - your mobile dev environment"
-    echo "Tip: Use 'C-a |' for horizontal split, 'C-a -' for vertical split"
+    echo ""
+    echo "  ┌───────────────────────────────────────┐"
+    echo "  │  SKIPPR - Mobile Dev Environment      │"
+    echo "  │                                       │"
+    echo "  │  Commands: .a then letter             │"
+    echo "  │                                       │"
+    echo "  │  i=^C  d=^D  e=Esc  w=:w  q=:q       │"
+    echo "  │  s=split h  v=split v  hjkl=panes    │"
+    echo "  │                                       │"
+    echo "  │  .a? = help    .am = about            │"
+    echo "  └───────────────────────────────────────┘"
+    echo ""
 fi
