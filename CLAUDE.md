@@ -92,25 +92,31 @@ Users typically:
 
 ## Mobile Commands (Gboard optimized)
 
-Uses shell aliases - just type the command at the prompt. Reliable and simple!
+**Anywhere: `qq` + letter** - works inside ANY program (vim, claude, etc.)
 
-**Send keys to running process:**
-| Alias | Sends |
-|-------|-------|
-| `kc` | Ctrl+C (interrupt) |
-| `kd` | Ctrl+D (EOF/exit) |
-| `kz` | Ctrl+Z (suspend) |
-| `ke` | Escape |
-| `kt` | Tab |
+| Keys | Action |
+|------|--------|
+| `qqe` | Escape |
+| `qqc` | Ctrl+C |
+| `qqd` | Ctrl+D |
+| `qqz` | Ctrl+Z |
+| `qqt` | Tab |
+| `qqa` | Start of line |
+| `qqf` | End of line |
+| `qqr` | Search history |
+| `qql` | Clear screen |
+| `qqq` | Literal 'q' |
 
-**Tmux:**
-| Alias | Action |
-|-------|--------|
-| `th` | Split horizontal |
-| `tv` | Split vertical |
-| `tw` | New window |
-| `tn` | Next window |
-| `tp` | Prev window |
+**Tmux (qq + letter):**
+| Keys | Action |
+|------|--------|
+| `qqh` | Split horizontal |
+| `qqv` | Split vertical |
+| `qqw` | New window |
+| `qqn` | Next window |
+| `qqp` | Prev window |
+| `qq?` | Help popup |
+| `qqm` | Tugboat |
 
 **Vim (in insert mode):**
 | Keys | Action |
@@ -119,12 +125,11 @@ Uses shell aliases - just type the command at the prompt. Reliable and simple!
 | `kk` | Escape |
 | `jk` | Escape |
 
-**Other:**
+**At shell prompt:**
 | Alias | Action |
 |-------|--------|
-| `xx` | Clear screen |
 | `hh` | Show help |
-| `mm` | Show tugboat/version |
+| `mm` | Show tugboat |
 
 ## Important Notes
 

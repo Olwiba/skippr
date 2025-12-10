@@ -74,24 +74,26 @@ alias hh='echo "
   ┌─────────────────────────────────────────┐
   │  SKIPPR MOBILE COMMANDS                 │
   ├─────────────────────────────────────────┤
-  │  SEND KEYS (to running process):        │
-  │    kc = Ctrl+C    kd = Ctrl+D           │
-  │    kz = Ctrl+Z    ke = Escape           │
-  │    kt = Tab                             │
+  │  ANYWHERE (qq + letter):                │
+  │    qqe = Escape   qqc = Ctrl+C          │
+  │    qqd = Ctrl+D   qqz = Ctrl+Z          │
+  │    qqt = Tab      qql = Clear           │
+  │    qqa = Line start  qqf = Line end     │
+  │    qqr = Search history                 │
+  │    qq? = Help popup                     │
   ├─────────────────────────────────────────┤
-  │  TMUX:                                  │
-  │    th = split horizontal                │
-  │    tv = split vertical                  │
-  │    tw = new window                      │
-  │    tn = next window                     │
-  │    tp = prev window                     │
+  │  TMUX (qq + letter):                    │
+  │    qqh = split horizontal               │
+  │    qqv = split vertical                 │
+  │    qqw = new window                     │
+  │    qqn = next window                    │
+  │    qqp = prev window                    │
   ├─────────────────────────────────────────┤
   │  VIM (in insert mode):                  │
   │    jj or kk or jk = Escape              │
   ├─────────────────────────────────────────┤
-  │  OTHER:                                 │
-  │    xx = clear    hh = this help         │
-  │    mm = about                           │
+  │  AT PROMPT:                             │
+  │    hh = this help    mm = about         │
   └─────────────────────────────────────────┘
 "'
 
@@ -119,10 +121,11 @@ if [[ -o interactive ]]; then
     echo "  ┌───────────────────────────────────────┐"
     echo "  │  SKIPPR - Mobile Dev Environment      │"
     echo "  │                                       │"
-    echo "  │  Type: hh = help   mm = about         │"
+    echo "  │  Anywhere: qq + letter                │"
+    echo "  │    qqe=Esc qqc=^C qqd=^D qq?=help    │"
     echo "  │                                       │"
-    echo "  │  kc=^C  kd=^D  ke=Esc  th=split      │"
-    echo "  │  vim: jj or kk = Escape               │"
+    echo "  │  In vim: jj or kk = Escape            │"
+    echo "  │  At prompt: hh=help  mm=about         │"
     echo "  └───────────────────────────────────────┘"
     echo ""
 fi
