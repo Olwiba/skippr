@@ -3,13 +3,14 @@ FROM ubuntu:24.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install base dependencies (curl needed for healthchecks)
+# Install base dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
     git \
     tmux \
     zsh \
+    vim \
     build-essential \
     ca-certificates \
     unzip \
@@ -58,6 +59,7 @@ RUN npm install -g @anthropic-ai/claude-code
 # Copy configuration files
 COPY --chown=dev:dev config/.tmux.conf /home/dev/.tmux.conf
 COPY --chown=dev:dev config/.zshrc /home/dev/.zshrc
+COPY --chown=dev:dev config/.vimrc /home/dev/.vimrc
 
 # Copy entrypoint script
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh

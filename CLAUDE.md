@@ -63,11 +63,10 @@ docker-compose up --build
 ## Configuration Philosophy
 
 ### Tmux (.tmux.conf)
-- **Activation**: `.a` (period then 'a') enters command mode, then single letter
-- **All letters**: No special keys needed - works perfectly on Gboard
 - **Mouse support**: Enabled for touch interaction
 - **Large history**: 100k lines for deep scrollback
 - **Minimal status bar**: Shows session, time, date
+- **Mobile**: Use shell aliases (`th`, `tv`, `kc`, etc.) instead of keybindings
 
 ### Zsh (.zshrc)
 - **Minimal and fast**: No heavy frameworks (Oh My Zsh, etc.)
@@ -91,56 +90,41 @@ Users typically:
 - **Explicit over implicit**: Clear configuration with comments
 - **Minimal configs**: Only include what's needed, no bloat
 
-## Mobile-Friendly Tmux Bindings (Gboard optimized)
+## Mobile Commands (Gboard optimized)
 
-**Activation: `.a` then a letter** - all letters, no special keys needed!
+Uses shell aliases - just type the command at the prompt. Reliable and simple!
 
-**Control:**
-| `.a` + | Sends |
-|--------|-------|
-| `i` | Ctrl+C (interrupt) |
-| `d` | Ctrl+D (EOF/exit) |
-| `z` | Ctrl+Z (suspend) |
-| `x` | Ctrl+L (clear) |
+**Send keys to running process:**
+| Alias | Sends |
+|-------|-------|
+| `kc` | Ctrl+C (interrupt) |
+| `kd` | Ctrl+D (EOF/exit) |
+| `kz` | Ctrl+Z (suspend) |
+| `ke` | Escape |
+| `kt` | Tab |
 
-**Vim:**
-| `.a` + | Sends |
-|--------|-------|
-| `e` | Escape |
-| `w` | Save (:w) |
-| `q` | Quit (:q) |
-| `o` | Save+quit (:wq) |
+**Tmux:**
+| Alias | Action |
+|-------|--------|
+| `th` | Split horizontal |
+| `tv` | Split vertical |
+| `tw` | New window |
+| `tn` | Next window |
+| `tp` | Prev window |
 
-**Navigation:**
-| `.a` + | Sends |
-|--------|-------|
-| `a` | Start of line |
-| `f` | End of line |
-| `r` | Reverse search |
-| `t` | Tab |
+**Vim (in insert mode):**
+| Keys | Action |
+|------|--------|
+| `jj` | Escape |
+| `kk` | Escape |
+| `jk` | Escape |
 
-**Special chars:**
-| `.a` + | Sends |
-|--------|-------|
-| `g` | Backtick |
-| `b` | Tilde ~ |
-
-**Windows:**
-| `.a` + | Action |
-|--------|--------|
-| `c` | New window |
-| `n` | Next window |
-| `p` | Prev window |
-
-**Panes:**
-| `.a` + | Action |
-|--------|--------|
-| `s` | Split horizontal |
-| `v` | Split vertical |
-| `hjkl` | Navigate panes |
-| `y` | Scroll/copy mode |
-
-**Help:** `.a?` = keybindings, `.am` = tugboat/version
+**Other:**
+| Alias | Action |
+|-------|--------|
+| `xx` | Clear screen |
+| `hh` | Show help |
+| `mm` | Show tugboat/version |
 
 ## Important Notes
 
