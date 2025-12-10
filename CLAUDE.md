@@ -115,7 +115,7 @@ Users typically:
 | `qqw` | New window |
 | `qqn` | Next window |
 | `qqp` | Prev window |
-| `qq?` | Help popup |
+| `qqx` | Help popup |
 | `qqm` | Tugboat |
 
 **Vim (in insert mode):**

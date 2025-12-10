@@ -80,7 +80,7 @@ alias hh='echo "
   │    qqt = Tab      qql = Clear           │
   │    qqa = Line start  qqf = Line end     │
   │    qqr = Search history                 │
-  │    qq? = Help popup                     │
+  │    qqx = Help popup                     │
   ├─────────────────────────────────────────┤
   │  TMUX (qq + letter):                    │
   │    qqh = split horizontal               │
@@ -88,6 +88,7 @@ alias hh='echo "
   │    qqw = new window                     │
   │    qqn = next window                    │
   │    qqp = prev window                    │
+  │    qqm = about/tugboat                  │
   ├─────────────────────────────────────────┤
   │  VIM (in insert mode):                  │
   │    jj or kk or jk = Escape              │
@@ -99,33 +100,31 @@ alias hh='echo "
 
 # Show about/tugboat
 alias mm='echo "
-            ~  ~
-       ~~~~     ~~~~
-          |\\
-          | \\
-          |S \\
-     _____|   \\____
-    |             |_____
-    | ○  SKIPPR   |     |~~
-    |_____________|_____|
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       .  o ..
+        o . o o.o
+             ...oo
+               __[]__
+            __|_o_o_o\\__
+            \"\"\"\"\"\"\"\"\"\"\"\"
+             \\. ..  . /
+        ^^^^^^^^^^^^^^^^^^^^
 
-           v0.0.1
-
-    Mobile Dev Environment
+          SKIPPR v0.0.1
+      Mobile Dev Environment
 "'
 
 # Environment message on login
 if [[ -o interactive ]]; then
     echo ""
-    echo "  ┌───────────────────────────────────────┐"
-    echo "  │  SKIPPR - Mobile Dev Environment      │"
-    echo "  │                                       │"
-    echo "  │  Anywhere: qq + letter                │"
-    echo "  │    qqe=Esc qqc=^C qqd=^D qq?=help    │"
-    echo "  │                                       │"
-    echo "  │  In vim: jj or kk = Escape            │"
-    echo "  │  At prompt: hh=help  mm=about         │"
-    echo "  └───────────────────────────────────────┘"
+    echo "       .  o ..                SKIPPR v0.0.1"
+    echo "        o . o o.o             Mobile Dev Environment"
+    echo "             ...oo"
+    echo "               __[]__         qq + letter anywhere:"
+    echo "            __|_o_o_o\\__       e=Esc c=^C d=^D"
+    echo '            """""""""""        h=split v=vert'
+    echo "             \\. ..  . /        x=help m=about"
+    echo "        ^^^^^^^^^^^^^^^^^^^^"
+    echo ""
+    echo "        vim: jj or kk = Esc   prompt: hh=help"
     echo ""
 fi
