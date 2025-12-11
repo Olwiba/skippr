@@ -56,10 +56,10 @@ ENV PATH="/home/dev/.npm-global/bin:${PATH}"
 # Install Claude Code CLI
 RUN npm install -g @anthropic-ai/claude-code
 
-# Copy configuration files
-COPY --chown=dev:dev config/.tmux.conf /home/dev/.tmux.conf
-COPY --chown=dev:dev config/.zshrc /home/dev/.zshrc
-COPY --chown=dev:dev config/.vimrc /home/dev/.vimrc
+# Copy configuration files to /etc/skel (entrypoint will deploy to home)
+COPY config/.tmux.conf /etc/skel/.tmux.conf
+COPY config/.zshrc /etc/skel/.zshrc
+COPY config/.vimrc /etc/skel/.vimrc
 
 # Copy entrypoint script
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh

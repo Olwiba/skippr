@@ -4,6 +4,15 @@ set -e
 # Ensure directories exist (volumes may be empty on first run)
 mkdir -p ~/projects ~/.claude
 
+# Deploy config files from /etc/skel (updates on each deploy)
+# User customizations should go in ~/.zshrc.local, ~/.vimrc.local, etc.
+cp /etc/skel/.tmux.conf ~/.tmux.conf
+cp /etc/skel/.zshrc ~/.zshrc
+cp /etc/skel/.vimrc ~/.vimrc
+
+# Source user's local customizations if they exist
+# (Add 'source ~/.zshrc.local' to .zshrc if you want local overrides)
+
 # Configure git from environment variables
 if [ -n "$GIT_USER_NAME" ]; then
     git config --global user.name "$GIT_USER_NAME"

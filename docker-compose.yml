@@ -8,10 +8,9 @@ services:
       - "7681:7681"
 
     volumes:
-      # Persistent storage - keeps data across redeployments
-      - skippr-projects:/home/dev/projects
-      - skippr-claude:/home/dev/.claude
-      - skippr-zsh-history:/home/dev/.zsh_history
+      # Persistent home directory - keeps all user data across redeployments
+      # Config files (.zshrc, .tmux.conf, etc.) are refreshed from repo on each deploy
+      - skippr-home:/home/dev
 
     environment:
       # Optional: Claude Code API Key
@@ -31,9 +30,5 @@ services:
       # Security: Access Skippr via Tailscale IP only (no public domain needed)
 
 volumes:
-  skippr-projects:
-    driver: local
-  skippr-claude:
-    driver: local
-  skippr-zsh-history:
+  skippr-home:
     driver: local
