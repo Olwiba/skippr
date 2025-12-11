@@ -13,10 +13,6 @@ services:
       - skippr-home:/home/dev
 
     environment:
-      # Optional: Claude Code API Key
-      # Leave empty to use browser authentication with Claude.ai Pro
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-
       # Optional: Set timezone
       - TZ=${TZ:-UTC}
 

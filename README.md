@@ -30,13 +30,14 @@ Skippr gives you a full-featured terminal accessible from your browser. Deploy o
    - Source: Your forked repository
    - Coolify will automatically use `docker-compose.yml`
 
-3. **Set environment variables** in Coolify (all optional):
+3. **Set environment variables** in Coolify (optional):
    ```bash
-   # Claude Code API key (or authenticate via browser)
-   ANTHROPIC_API_KEY=sk-ant-your-key-here
-
    # Timezone
    TZ=America/New_York
+
+   # Git config
+   GIT_USER_NAME=Your Name
+   GIT_USER_EMAIL=you@example.com
    ```
 
 4. **Deploy** 🚀

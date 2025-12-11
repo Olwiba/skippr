@@ -156,7 +156,6 @@ skippr/
 ## Environment Variables
 
 ### Skippr Container Level (set in Coolify)
-- `ANTHROPIC_API_KEY` - Optional: For Claude Code API auth (can use browser auth instead)
 - `TZ` - Optional: Timezone setting (defaults to UTC)
 - `GIT_USER_NAME` - Git commit author name
 - `GIT_USER_EMAIL` - Git commit author email
