@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     ca-certificates \
     unzip \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GitHub CLI
@@ -38,24 +39,20 @@ RUN for i in 1 2 3 4 5; do \
 RUN wget -qO /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.aarch64 \
     && chmod +x /usr/local/bin/ttyd
 
-# Create non-root user
+# Create non-root user with npm-global setup
 RUN useradd -m -s /bin/zsh dev \
     && mkdir -p /home/dev/projects \
     && mkdir -p /home/dev/.claude \
+    && mkdir -p /home/dev/.npm-global \
     && chown -R dev:dev /home/dev
 
-# Switch to dev user
-USER dev
-WORKDIR /home/dev
+# Configure npm prefix for dev user (allows global installs without root)
+RUN su - dev -c "npm config set prefix '/home/dev/.npm-global'"
 
-# Configure npm to use user-local directory for global packages
-RUN mkdir -p /home/dev/.npm-global \
-    && npm config set prefix '/home/dev/.npm-global'
-
-# Add npm global bin to PATH (bun already installed globally as root)
+# Add npm global bin to PATH
 ENV PATH="/home/dev/.npm-global/bin:${PATH}"
 
-# Install Claude Code CLI
+# Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
 # Copy configuration files to /etc/skel (entrypoint will deploy to home)
