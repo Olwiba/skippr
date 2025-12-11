@@ -21,8 +21,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Bun globally via npm (more reliable than GitHub releases)
-RUN npm install -g bun
+# Install Bun globally (with retry for flaky GitHub)
+RUN for i in 1 2 3 4 5; do \
+        curl -fsSL https://bun.sh/install | bash && break || sleep 10; \
+    done && \
+    ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 
 # Install ttyd for web terminal (ARM64 version)
 RUN wget -qO /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.aarch64 \
@@ -38,18 +41,11 @@ RUN useradd -m -s /bin/zsh dev \
 USER dev
 WORKDIR /home/dev
 
-# Install Bun for dev user via npm
-RUN npm install -g bun
-
-# Add Bun to PATH for dev user
-ENV BUN_INSTALL="/home/dev/.bun"
-ENV PATH="${BUN_INSTALL}/bin:${PATH}"
-
 # Configure npm to use user-local directory for global packages
 RUN mkdir -p /home/dev/.npm-global \
     && npm config set prefix '/home/dev/.npm-global'
 
-# Add npm global bin to PATH
+# Add npm global bin to PATH (bun already installed globally as root)
 ENV PATH="/home/dev/.npm-global/bin:${PATH}"
 
 # Install Claude Code CLI
