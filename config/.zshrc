@@ -78,6 +78,7 @@ alias hh='echo "
   │    qqe = Escape   qqc = Ctrl+C          │
   │    qqd = Ctrl+D   qqz = Ctrl+Z          │
   │    qqt = Tab      qql = Clear           │
+  │    qqs = Fix glitched screen           │
   │    qqa = Line start  qqf = Line end     │
   │    qqr = Search history                 │
   │    qqx = Help popup                     │
