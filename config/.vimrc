@@ -1,4 +1,4 @@
-" Skippr vim configuration - mobile optimized
+" Skippr vim configuration
 
 " Exit insert mode with jj or kk (no Escape needed!)
 inoremap jj <Esc>
@@ -39,4 +39,3 @@ set scrolloff=8
 " Colors
 syntax on
 set background=dark
-

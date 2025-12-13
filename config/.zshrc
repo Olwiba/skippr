@@ -1,4 +1,4 @@
-# Skippr zsh configuration - minimal and fast
+# Skippr zsh configuration
 
 # History configuration
 HISTFILE=~/.zsh_history
@@ -45,10 +45,6 @@ alias gl='git log --oneline --graph --decorate'
 
 # Claude Code alias  
 alias claude='claude'
-
-# ==========================================
-# MOBILE SHORTCUTS (type these at prompt)
-# ==========================================
 
 # TMUX - Windows & Panes
 alias th='tmux split-window -h'           # split horizontal

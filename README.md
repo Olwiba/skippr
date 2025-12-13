@@ -10,159 +10,100 @@ Skippr gives you a full-featured terminal accessible from your browser. Deploy o
 
 ## What's Included
 
-- **ttyd** - Web-based terminal (port 7681)
-- **tmux** - Session persistence with mobile-friendly shortcuts
-- **Claude Code CLI** - AI-powered development assistant
-- **Node.js 22 LTS** + **Bun** - Modern JavaScript runtimes
-- **Git** + **zsh** - Essential development tools
-- **Persistent storage** - Projects and config survive restarts
+| Tool | Purpose |
+|------|---------|
+| **Ubuntu 24.04** | Base image |
+| **ttyd** | Web-based terminal (port 7681) |
+| **tmux** | Session persistence + mobile shortcuts |
+| **zsh** | Shell with git-aware prompt |
+| **Node.js 22 LTS** | JavaScript runtime |
+| **Bun** | Fast JS runtime & package manager |
+| **Claude Code CLI** | AI-powered development |
+| **Git** | Version control |
+| **GitHub CLI** | `gh` for repo management |
+| **vim** | Text editor with mobile bindings |
 
 ---
 
-## Quick Start
+## How It Works
 
-### 1. Fork & Deploy
+1. **Deploy** via Docker or Coolify (uses `docker-compose.yml`)
+2. **Access** the web terminal at `http://your-server:7681`
+3. **Land** in a zsh shell inside a tmux session
+4. **Code** using Claude Code, your dev server, or any CLI tools
 
-1. **Fork this repository** to your GitHub account
+The entire `/home/dev` directory persists across restarts - projects, config, and Claude auth all survive redeployments.
 
-2. **Create a new service in Coolify**:
-   - Type: Docker Compose
-   - Source: Your forked repository
-   - Coolify will automatically use `docker-compose.yml`
+### Environment Variables (optional)
 
-3. **Set environment variables** in Coolify (optional):
-   ```bash
-   # Timezone
-   TZ=America/New_York
-
-   # Git config
-   GIT_USER_NAME=Your Name
-   GIT_USER_EMAIL=you@example.com
-   ```
-
-4. **Deploy** 🚀
-
-Coolify will build the container and provide you with a URL like `https://skippr.yourdomain.com`.
-
-### 2. First Login
-
-Open the URL in your browser. You'll land in a zsh shell inside a tmux session.
-
-**Authenticate Claude Code**:
 ```bash
-claude
-```
-
-Follow the browser authentication prompts (uses your Claude.ai Pro plan). This only needs to be done once - credentials persist in the `~/.claude` volume.
-
-### 3. Start Coding
-
-**Create a new project**:
-```bash
-cd ~/projects
-git clone https://github.com/you/your-project
-cd your-project
-```
-
-**Create a tmux split** (Ctrl+A, then |):
-```bash
-# Left pane: Start your dev server
-bun dev
-
-# Right pane: Start Claude Code
-claude
+TZ=America/New_York        # Timezone
+GIT_USER_NAME=Your Name    # Git commit author
+GIT_USER_EMAIL=you@ex.com  # Git commit email
+EXTRA_PACKAGES=htop,curl   # Additional apt packages to install
 ```
 
 ---
 
-## Security Setup (Recommended)
+## Mobile Commands
 
-For production use, secure Skippr with Tailscale - no public exposure needed.
+Type `hh` at the prompt for a quick reference, or `qqx` anywhere for a popup.
 
-### 1. Install Tailscale on Your Coolify Server
+### Anywhere: `qq` + letter
 
-SSH into your server (or use Coolify's web terminal) and run:
+Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up
-tailscale ip -4   # Note this IP (e.g., 100.x.x.x)
-```
+| Keys | Action |
+|------|--------|
+| `qqe` | Escape |
+| `qqc` | Ctrl+C |
+| `qqd` | Ctrl+D |
+| `qqz` | Ctrl+Z |
+| `qqt` | Tab |
+| `qqa` | Start of line (Ctrl+A) |
+| `qqf` | End of line (Ctrl+E) |
+| `qqr` | Reverse search history (Ctrl+R) |
+| `qql` | Clear screen |
+| `qqs` | Fix glitched screen |
+| `qqq` | Literal 'q' |
 
-### 2. Install Tailscale on Your Mobile Device
+### Tmux: `qq` + letter
 
-1. Download Tailscale from App Store / Play Store
-2. Sign in with the same account
-3. Both devices are now on the same private network
+| Keys | Action |
+|------|--------|
+| `qqh` | Split pane horizontal |
+| `qqv` | Split pane vertical |
+| `qqw` | New window |
+| `qqn` | Next window |
+| `qqp` | Previous window |
+| `qqx` | Help popup |
+| `qqm` | About/tugboat |
 
-### 3. Configure Skippr in Coolify
+### Vim (insert mode)
 
-- **Disable or remove the public domain** for Skippr (Configuration → Domains)
-- Keep the container running - it's now only accessible via Tailscale
+| Keys | Action |
+|------|--------|
+| `jj` | Escape |
+| `kk` | Escape |
+| `jk` | Escape |
 
-### 4. Access Skippr
+### At Shell Prompt
 
-Open in your mobile browser: `http://100.x.x.x:7681` (your server's Tailscale IP)
-
-That's it! Tailscale handles encryption and authentication. No public exposure, no passwords to remember.
-
----
-
-## Accessing Dev Servers
-
-When running dev servers in Skippr (e.g., `bun dev` on port 3000), access them via:
-
-1. **Tailscale VPN** - Your mobile device and Coolify server on same network
-2. **Direct IP access** - `http://[server-tailscale-ip]:3000`
-
-Your hot-reload changes appear instantly while coding from your phone!
-
----
-
-## Database Connections
-
-Databases are managed separately in Coolify. Each project configures its own connection:
-
-**Example Coolify project structure**:
-```
-your-coolify-project/
-├── postgres-app1
-├── postgres-app2
-├── postgres-app3
-└── skippr
-```
-
-**Configure per-project** by creating `.env` files:
-```bash
-# ~/projects/my-app/.env
-DATABASE_URL=postgresql://user:password@postgres-app1:5432/myapp
-```
-
-Then use it in your code:
-```javascript
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
-const client = postgres(process.env.DATABASE_URL);
-const db = drizzle(client);
-```
+| Alias | Action |
+|-------|--------|
+| `hh` | Show help |
+| `mm` | Show about |
+| `th` / `tv` | Split horizontal / vertical |
+| `tw` | New tmux window |
+| `tn` / `tp` | Next / previous window |
 
 ---
 
-## Tmux Quick Reference
+## Tips
 
-Prefix: `Ctrl+A` (easier than `Ctrl+B` on mobile)
-
-| Command | Action |
-|---------|--------|
-| `Ctrl+A` then `\|` | Split horizontally |
-| `Ctrl+A` then `-` | Split vertically |
-| `Ctrl+A` then `h/j/k/l` | Navigate panes |
-| `Ctrl+A` then `c` | New window |
-| `Ctrl+A` then `d` | Detach (keeps running) |
-| `Ctrl+A` then `[` | Scroll mode (q to exit) |
-
-**Mouse support enabled** - tap to switch panes, scroll with your finger.
+- **Mouse enabled** - tap to switch panes, scroll with finger
+- **Disable mobile autocorrect** - it interferes with terminal input
+- **Tailscale recommended** - access Skippr privately without exposing ports
 
 ---
 

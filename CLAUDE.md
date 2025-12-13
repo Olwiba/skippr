@@ -138,6 +138,7 @@ Users typically:
 - tmux auto-attaches if session exists, otherwise creates new
 - All configs optimized for mobile keyboards (C-a prefix, special bindings)
 - Keep the image lean - only install necessary tools
+- **Keep command lists in sync**: The `qq` bindings in `config/.tmux.conf` and the help text in `config/.zshrc` (`hh` alias) must stay synchronized. When adding/changing commands, update both files.
 
 ## File Structure
 
