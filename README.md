@@ -4,9 +4,8 @@
 
 **A self-hosted development environment for coding from anywhere, on any device.**
 
-Skippr gives you a full-featured terminal accessible from your browser. Deploy once, code from your phone, tablet, or any browser.
-
----
+Skippr gives you a full-featured terminal accessible from your browser.  
+Deploy once, code from your phone, tablet, or any browser.
 
 ## What's Included
 
@@ -22,8 +21,6 @@ Skippr gives you a full-featured terminal accessible from your browser. Deploy o
 | **Git** | Version control |
 | **GitHub CLI** | `gh` for repo management |
 | **vim** | Text editor with mobile bindings |
-
----
 
 ## How It Works
 
@@ -42,8 +39,6 @@ GIT_USER_NAME=Your Name    # Git commit author
 GIT_USER_EMAIL=you@ex.com  # Git commit email
 EXTRA_PACKAGES=htop,curl   # Additional apt packages to install
 ```
-
----
 
 ## Mobile Commands
 
@@ -97,16 +92,6 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `tw` | New tmux window |
 | `tn` / `tp` | Next / previous window |
 
----
-
-## Tips
-
-- **Mouse enabled** - tap to switch panes, scroll with finger
-- **Disable mobile autocorrect** - it interferes with terminal input
-- **Tailscale recommended** - access Skippr privately without exposing ports
-
----
-
 ## License
 
-MIT
+MIT - Use as you please.
