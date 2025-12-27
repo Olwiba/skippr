@@ -1,4 +1,4 @@
-![Skippr Banner](images/skippr.0.0.1.png)
+![Skippr Banner](images/skippr.0.0.2.png)
 
 # Skippr
 
@@ -31,6 +31,9 @@ Deploy once, code from your phone, tablet, or any browser.
 
 The entire `/home/dev` directory persists across restarts - projects, config, and Claude auth all survive redeployments.
 
+> [!TIP]
+> For secure remote access, expose Skippr via [Tailscale](https://tailscale.com) rather than a public domain. No auth config needed—just access it from your tailnet.
+
 ### Environment Variables (optional)
 
 ```bash
@@ -44,7 +47,8 @@ EXTRA_PACKAGES=htop,curl   # Additional apt packages to install
 
 Type `hh` at the prompt for a quick reference, or `qqx` anywhere for a popup.
 
-### Anywhere: `qq` + letter
+<details>
+<summary><strong>Anywhere: <code>qq</code> + letter</strong></summary>
 
 Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 
@@ -62,7 +66,10 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `qqs` | Fix glitched screen |
 | `qqq` | Literal 'q' |
 
-### Tmux: `qq` + letter
+</details>
+
+<details>
+<summary><strong>Tmux: <code>qq</code> + letter</strong></summary>
 
 | Keys | Action |
 |------|--------|
@@ -74,7 +81,10 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `qqx` | Help popup |
 | `qqm` | About/tugboat |
 
-### Vim (insert mode)
+</details>
+
+<details>
+<summary><strong>Vim (insert mode)</strong></summary>
 
 | Keys | Action |
 |------|--------|
@@ -82,7 +92,10 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `kk` | Escape |
 | `jk` | Escape |
 
-### At Shell Prompt
+</details>
+
+<details>
+<summary><strong>Shell Aliases</strong></summary>
 
 | Alias | Action |
 |-------|--------|
@@ -92,6 +105,12 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `tw` | New tmux window |
 | `tn` / `tp` | Next / previous window |
 
+</details>
+
 ## License
 
 MIT - Use as you please.
+
+---
+
+[Changelog](CHANGELOG.md)
