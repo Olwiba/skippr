@@ -28,6 +28,11 @@ if [ -n "$EXTRA_PACKAGES" ]; then
 fi
 
 # =============================================================================
+# Security: Lock down /var/tmp permissions
+# =============================================================================
+chmod 1777 /var/tmp 2>/dev/null || true
+
+# =============================================================================
 # Run remaining setup as dev user
 # =============================================================================
 setup_user() {
@@ -38,6 +43,12 @@ setup_user() {
     cp /etc/skel/.tmux.conf ~/.tmux.conf
     cp /etc/skel/.zshrc ~/.zshrc
     cp /etc/skel/.vimrc ~/.vimrc
+
+    # Fix cache permissions (prevent world-writable)
+    if [ -d ~/.cache ]; then
+        chmod 755 ~/.cache
+        find ~/.cache -type d -exec chmod 755 {} \; 2>/dev/null || true
+    fi
 
     # Configure git from environment variables
     if [ -n "$GIT_USER_NAME" ]; then
@@ -62,4 +73,4 @@ exec gosu dev ttyd -p 7681 -W \
   -t fontSize=16 \
   -t fontFamily="Menlo, Monaco, Consolas, monospace" \
   -t "theme=${THEME}" \
-  /bin/zsh -c 'tmux attach || tmux new-session'
+  /bin/zsh -c 'tmux new-session -A -s main || (tmux kill-server 2>/dev/null; tmux new-session -s main)'

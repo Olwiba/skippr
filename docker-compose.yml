@@ -12,6 +12,17 @@ services:
       # Config files (.zshrc, .tmux.conf, etc.) are refreshed from repo on each deploy
       - skippr-home:/home/dev
 
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+
     environment:
       # Optional: Set timezone
       - TZ=${TZ:-UTC}

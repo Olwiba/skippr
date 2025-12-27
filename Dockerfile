@@ -35,9 +35,15 @@ RUN for i in 1 2 3 4 5; do \
     done && \
     ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 
-# Install ttyd for web terminal (ARM64 version)
-RUN wget -qO /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.aarch64 \
-    && chmod +x /usr/local/bin/ttyd
+# Install ttyd for web terminal (auto-detect architecture)
+RUN ARCH=$(uname -m) && \
+    case "$ARCH" in \
+        x86_64)  TTYD_ARCH="x86_64" ;; \
+        aarch64) TTYD_ARCH="aarch64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    wget -qO /usr/local/bin/ttyd "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.${TTYD_ARCH}" && \
+    chmod +x /usr/local/bin/ttyd
 
 # Create non-root user with npm-global setup
 RUN useradd -m -s /bin/zsh dev \
