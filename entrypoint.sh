@@ -46,6 +46,20 @@ setup_user() {
     if [ -n "$GIT_USER_EMAIL" ]; then
         git config --global user.email "$GIT_USER_EMAIL"
     fi
+
+    # Git aliases
+    git config --global alias.st status
+    git config --global alias.co checkout
+    git config --global alias.br branch
+    git config --global alias.cm "commit -m"
+    git config --global alias.ca "commit --amend"
+    git config --global alias.aa "add --all"
+    git config --global alias.df diff
+    git config --global alias.dfs "diff --staged"
+    git config --global alias.lg "log --oneline --graph --decorate"
+    git config --global alias.last "log -1 HEAD"
+    git config --global alias.unstage "reset HEAD --"
+    git config --global alias.undo "reset --soft HEAD~1"
 }
 
 # Export function and run as dev user
@@ -59,6 +73,8 @@ THEME='{"background":"#282a36","foreground":"#f8f8f2","cursor":"#f8f8f2","select
 # Start ttyd web terminal as dev user
 echo "Starting ttyd web terminal on port 7681"
 exec gosu dev ttyd -p 7681 -W \
+  --reconnect 10 \
+  --ping-interval 30 \
   -t fontSize=16 \
   -t fontFamily="Menlo, Monaco, Consolas, monospace" \
   -t "theme=${THEME}" \
