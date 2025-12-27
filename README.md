@@ -109,8 +109,9 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 
 ## License
 
-MIT - Use as you please.
+MIT - for the love of OSS 💖.
 
 ---
 
 [Changelog](CHANGELOG.md)
+[Buy me a coffee](https://buymeacoffee.com/olwiba)
