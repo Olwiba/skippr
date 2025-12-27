@@ -76,4 +76,4 @@ exec gosu dev ttyd -p 7681 -W \
   -t fontSize=16 \
   -t fontFamily="Menlo, Monaco, Consolas, monospace" \
   -t "theme=${THEME}" \
-  /bin/zsh -c 'tmux attach || tmux new-session'
+  /bin/zsh -c 'tmux new-session -A -s main || (tmux kill-server 2>/dev/null; tmux new-session -s main)'
