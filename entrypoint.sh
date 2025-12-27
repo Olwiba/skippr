@@ -73,8 +73,6 @@ THEME='{"background":"#282a36","foreground":"#f8f8f2","cursor":"#f8f8f2","select
 # Start ttyd web terminal as dev user
 echo "Starting ttyd web terminal on port 7681"
 exec gosu dev ttyd -p 7681 -W \
-  --reconnect 10 \
-  --ping-interval 30 \
   -t fontSize=16 \
   -t fontFamily="Menlo, Monaco, Consolas, monospace" \
   -t "theme=${THEME}" \
