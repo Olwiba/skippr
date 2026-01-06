@@ -107,6 +107,28 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 
 </details>
 
+<details>
+<summary><strong>Git Aliases</strong></summary>
+
+| Alias | Action |
+|-------|--------|
+| `git st` | Status |
+| `git co` | Checkout |
+| `git br` | Branch |
+| `git cm "msg"` | Commit with message |
+| `git ca` | Commit amend |
+| `git aa` | Add all |
+| `git df` | Diff |
+| `git dfs` | Diff staged |
+| `git lg` | Log graph |
+| `git last` | Last commit |
+| `git unstage` | Unstage files |
+| `git undo` | Soft reset HEAD~1 |
+| `git cc` | Quick commit all: "update" |
+| `git cp` | Quick commit + push |
+
+</details>
+
 ## License
 
 MIT - for the love of OSS 💖.

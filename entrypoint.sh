@@ -71,6 +71,8 @@ setup_user() {
     git config --global alias.last "log -1 HEAD"
     git config --global alias.unstage "reset HEAD --"
     git config --global alias.undo "reset --soft HEAD~1"
+    git config --global alias.cc "commit -am 'update'"
+    git config --global alias.cp "!git commit -am 'update' && git push"
 }
 
 # Export function and run as dev user
