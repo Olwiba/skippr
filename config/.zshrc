@@ -46,6 +46,12 @@ alias gl='git log --oneline --graph --decorate'
 # Claude Code alias  
 alias claude='claude'
 
+# Ralph - Agentic coding
+alias r='ralph'
+alias ro='ralph-once'
+alias ri='ralph-init'
+alias rs='ralph status'
+
 # TMUX - Windows & Panes
 alias th='tmux split-window -h'           # split horizontal
 alias tv='tmux split-window -v'           # split vertical  
@@ -89,6 +95,12 @@ alias hh='echo "
   ├─────────────────────────────────────────┤
   │  VIM (in insert mode):                  │
   │    jj or kk or jk = Escape              │
+  ├─────────────────────────────────────────┤
+  │  RALPH (agentic coding):                │
+  │    r 5 = run 5 iterations               │
+  │    ro  = single iteration               │
+  │    ri  = init ralph in project          │
+  │    rs  = show PRD status                │
   ├─────────────────────────────────────────┤
   │  AT PROMPT:                             │
   │    hh = this help    mm = about         │

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.0.3
+
+### New Features
+- **Ralph** - Agentic coding system built-in
+  - Iteratively works through PRD tasks using Claude Code
+  - Auto-detects CI commands (pnpm/npm/bun/yarn/pytest/cargo/go)
+  - `ralph init` scaffolds project with PRD template
+  - `ralph <n>` runs n iterations, `ralph-once` for single pass
+  - `ralph status` shows PRD completion progress
+  - Short aliases: `r`, `ro`, `ri`, `rs`
+
+---
+
 ## v0.0.2
 
 ### Security

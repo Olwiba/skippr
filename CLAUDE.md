@@ -84,6 +84,72 @@ Users typically:
 5. Access hot-reloading dev servers via Tailscale
 6. Commit/push changes to trigger Coolify deployments
 
+## Ralph - Agentic Coding
+
+Ralph is a built-in agentic coding system that iteratively works through a PRD (Product Requirements Document) using Claude Code.
+
+### How Ralph Works
+
+1. You define tasks in a `plans/prd.json` file with priorities and verification steps
+2. Ralph invokes Claude Code to pick the highest-priority incomplete task
+3. Claude implements the feature, runs CI (tests/typechecks), updates the PRD
+4. Claude commits the work and logs progress to `progress.txt`
+5. Repeat until PRD is complete
+
+### Quick Start
+
+```bash
+# Initialize ralph in your project
+ralph init
+
+# Edit plans/prd.json with your tasks
+vim plans/prd.json
+
+# Run 5 iterations
+ralph 5
+
+# Check progress
+ralph status
+```
+
+### PRD Format
+
+```json
+[
+  {
+    "category": "functional",
+    "description": "User can log in with email",
+    "steps": [
+      "Navigate to login page",
+      "Enter valid credentials",
+      "Verify redirect to dashboard"
+    ],
+    "passes": false
+  }
+]
+```
+
+Categories: `functional`, `ui`, `validation`, `error-handling`, `setup`
+
+### Commands
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `ralph <n>` | `r <n>` | Run n iterations |
+| `ralph-once` | `ro` | Single iteration |
+| `ralph-init` | `ri` | Initialize in project |
+| `ralph status` | `rs` | Show PRD completion |
+
+### Options
+
+```bash
+ralph 10 -c 'pnpm test && pnpm typecheck'  # Custom CI command
+ralph 5 -p custom-prd.json                  # Custom PRD file
+ralph 5 -n 'notify-send'                    # Notification on complete
+```
+
+CI auto-detects based on project type (package.json, go.mod, Cargo.toml, etc.)
+
 ## Code Style
 
 - **Functional patterns** where applicable
@@ -130,6 +196,10 @@ Users typically:
 |-------|--------|
 | `hh` | Show help |
 | `mm` | Show tugboat |
+| `r <n>` | Ralph: run n iterations |
+| `ro` | Ralph: single iteration |
+| `ri` | Ralph: init in project |
+| `rs` | Ralph: show status |
 
 ## Important Notes
 
@@ -149,7 +219,12 @@ skippr/
 ├── entrypoint.sh           # Container startup script
 ├── config/
 │   ├── .tmux.conf          # Tmux configuration (includes mobile bindings)
-│   └── .zshrc              # Zsh configuration
+│   ├── .zshrc              # Zsh configuration
+│   └── .vimrc              # Vim configuration
+├── ralph/
+│   ├── ralph               # Main iteration script
+│   ├── ralph-once          # Single iteration script
+│   └── ralph-init          # Project initialization script
 ├── CLAUDE.md               # This file
 └── README.md               # User-facing documentation
 ```

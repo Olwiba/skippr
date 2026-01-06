@@ -1,4 +1,4 @@
-![Skippr Banner](images/skippr.0.0.2.png)
+![Skippr Banner](images/skippr.0.0.3.png)
 
 # Skippr
 
@@ -18,6 +18,7 @@ Deploy once, code from your phone, tablet, or any browser.
 | **Node.js 22 LTS** | JavaScript runtime |
 | **Bun** | Fast JS runtime & package manager |
 | **Claude Code CLI** | AI-powered development |
+| **Ralph** | Agentic coding system |
 | **Git** | Version control |
 | **GitHub CLI** | `gh` for repo management |
 | **vim** | Text editor with mobile bindings |
@@ -126,6 +127,63 @@ Works inside ANY program (vim, claude, node, etc.) - these are tmux bindings.
 | `git undo` | Soft reset HEAD~1 |
 | `git cc` | Quick commit all: "update" |
 | `git cp` | Quick commit + push |
+
+</details>
+
+## Ralph - Agentic Coding
+
+Ralph is a built-in system for autonomous, iterative development. Define tasks in a PRD, and Ralph works through them using Claude Code—running tests, committing changes, and tracking progress.
+
+```bash
+# Initialize ralph in your project
+ralph init
+
+# Edit plans/prd.json with your tasks  
+vim plans/prd.json
+
+# Run 5 iterations (Claude picks highest-priority task each time)
+ralph 5
+
+# Check progress
+ralph status
+```
+
+<details>
+<summary><strong>PRD Format</strong></summary>
+
+```json
+[
+  {
+    "category": "functional",
+    "description": "User can log in with email",
+    "steps": [
+      "Navigate to login page",
+      "Enter valid credentials", 
+      "Verify redirect to dashboard"
+    ],
+    "passes": false
+  }
+]
+```
+
+Categories: `functional`, `ui`, `validation`, `error-handling`, `setup`
+
+</details>
+
+<details>
+<summary><strong>Ralph Commands</strong></summary>
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `ralph <n>` | `r <n>` | Run n iterations |
+| `ralph-once` | `ro` | Single iteration |
+| `ralph-init` | `ri` | Initialize in project |
+| `ralph status` | `rs` | Show PRD completion |
+
+Options:
+- `-c 'pnpm test'` — Custom CI command (auto-detects by default)
+- `-p custom.json` — Custom PRD file path
+- `-n 'notify-send'` — Notification command on completion
 
 </details>
 

@@ -1,0 +1,250 @@
+#!/bin/bash
+# ralph - Agentic coding loop using Claude Code
+# Iteratively picks up tasks from PRD, works on them, runs CI, commits
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Help text
+show_help() {
+    echo -e "${BLUE}ralph${NC} - Agentic coding with Claude Code"
+    echo ""
+    echo "Usage: ralph <iterations> [options]"
+    echo "       ralph init           Initialize ralph in current project"
+    echo "       ralph once           Run single iteration"
+    echo "       ralph status         Show PRD completion status"
+    echo ""
+    echo "Options:"
+    echo "  -p, --prd <file>     PRD file (default: plans/prd.json)"
+    echo "  -r, --progress <file> Progress file (default: progress.txt)"
+    echo "  -c, --ci <command>   CI command (default: auto-detect)"
+    echo "  -n, --notify <cmd>   Notification command on completion"
+    echo "  -h, --help           Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  ralph 5              Run 5 iterations"
+    echo "  ralph 10 -c 'pnpm test && pnpm typecheck'"
+    echo "  ralph init           Create plans/prd.json template"
+    echo ""
+}
+
+# Auto-detect CI command based on project
+detect_ci() {
+    if [ -f "package.json" ]; then
+        # Check for common scripts
+        if grep -q '"typecheck"' package.json 2>/dev/null; then
+            if grep -q '"test"' package.json 2>/dev/null; then
+                # Detect package manager
+                if [ -f "pnpm-lock.yaml" ]; then
+                    echo "pnpm typecheck && pnpm test"
+                elif [ -f "bun.lockb" ]; then
+                    echo "bun run typecheck && bun test"
+                elif [ -f "yarn.lock" ]; then
+                    echo "yarn typecheck && yarn test"
+                else
+                    echo "npm run typecheck && npm test"
+                fi
+                return
+            fi
+        fi
+        # Just tests
+        if grep -q '"test"' package.json 2>/dev/null; then
+            if [ -f "pnpm-lock.yaml" ]; then
+                echo "pnpm test"
+            elif [ -f "bun.lockb" ]; then
+                echo "bun test"
+            elif [ -f "yarn.lock" ]; then
+                echo "yarn test"
+            else
+                echo "npm test"
+            fi
+            return
+        fi
+    fi
+    # Python
+    if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+        if [ -f "pytest.ini" ] || [ -d "tests" ]; then
+            echo "pytest"
+            return
+        fi
+    fi
+    # Go
+    if [ -f "go.mod" ]; then
+        echo "go test ./..."
+        return
+    fi
+    # Rust
+    if [ -f "Cargo.toml" ]; then
+        echo "cargo test"
+        return
+    fi
+    # No CI detected
+    echo ""
+}
+
+# Show PRD status
+show_status() {
+    local prd_file="${1:-plans/prd.json}"
+    
+    if [ ! -f "$prd_file" ]; then
+        echo -e "${RED}Error: PRD file not found: $prd_file${NC}"
+        echo "Run 'ralph init' to create one."
+        exit 1
+    fi
+    
+    local total=$(jq length "$prd_file")
+    local passing=$(jq '[.[] | select(.passes == true)] | length' "$prd_file")
+    local pending=$((total - passing))
+    
+    echo -e "${BLUE}PRD Status:${NC} $prd_file"
+    echo -e "  ${GREEN}✓ Passing:${NC} $passing"
+    echo -e "  ${YELLOW}○ Pending:${NC} $pending"
+    echo -e "  Total: $total"
+    echo ""
+    
+    if [ "$pending" -gt 0 ]; then
+        echo -e "${YELLOW}Pending tasks:${NC}"
+        jq -r '.[] | select(.passes == false) | "  - \(.description)"' "$prd_file"
+    else
+        echo -e "${GREEN}All tasks complete!${NC}"
+    fi
+}
+
+# Default values
+PRD_FILE="plans/prd.json"
+PROGRESS_FILE="progress.txt"
+CI_COMMAND=""
+NOTIFY_CMD=""
+
+# Parse arguments
+if [ "$1" = "init" ]; then
+    exec "$SCRIPT_DIR/ralph-init" "${@:2}"
+fi
+
+if [ "$1" = "once" ]; then
+    shift
+    exec "$SCRIPT_DIR/ralph-once" "$@"
+fi
+
+if [ "$1" = "status" ]; then
+    shift
+    show_status "$@"
+    exit 0
+fi
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ -z "$1" ]; then
+    show_help
+    exit 0
+fi
+
+# First arg should be iterations
+if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error: First argument must be number of iterations${NC}"
+    show_help
+    exit 1
+fi
+
+ITERATIONS=$1
+shift
+
+# Parse remaining options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -p|--prd)
+            PRD_FILE="$2"
+            shift 2
+            ;;
+        -r|--progress)
+            PROGRESS_FILE="$2"
+            shift 2
+            ;;
+        -c|--ci)
+            CI_COMMAND="$2"
+            shift 2
+            ;;
+        -n|--notify)
+            NOTIFY_CMD="$2"
+            shift 2
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Validate PRD exists
+if [ ! -f "$PRD_FILE" ]; then
+    echo -e "${RED}Error: PRD file not found: $PRD_FILE${NC}"
+    echo "Run 'ralph init' to create one."
+    exit 1
+fi
+
+# Auto-detect CI if not specified
+if [ -z "$CI_COMMAND" ]; then
+    CI_COMMAND=$(detect_ci)
+fi
+
+# Build CI instruction
+CI_INSTRUCTION=""
+if [ -n "$CI_COMMAND" ]; then
+    CI_INSTRUCTION="2. Check that CI passes via: $CI_COMMAND"
+else
+    CI_INSTRUCTION="2. If the project has tests or type checking, verify they pass."
+fi
+
+echo -e "${BLUE}╔═══════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}RALPH${NC} - Agentic Coding Loop              ${BLUE}║${NC}"
+echo -e "${BLUE}╚═══════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "PRD:       ${YELLOW}$PRD_FILE${NC}"
+echo -e "Progress:  ${YELLOW}$PROGRESS_FILE${NC}"
+echo -e "CI:        ${YELLOW}${CI_COMMAND:-none}${NC}"
+echo -e "Iterations: ${YELLOW}$ITERATIONS${NC}"
+echo ""
+
+# Main loop
+for ((i=1; i<=ITERATIONS; i++)); do
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}Iteration $i of $ITERATIONS${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    result=$(claude --permission-mode acceptEdits -p "@$PRD_FILE @$PROGRESS_FILE \
+1. Find the highest-priority feature to work on and work only on that feature. \
+This should be the one YOU decide has the highest priority - not necessarily the first in the list. \
+$CI_INSTRUCTION \
+3. Update the PRD with the work that was done (set passes: true for completed items). \
+4. Append your progress to the $PROGRESS_FILE file. \
+Use this to leave a note for the next person working in the codebase. \
+5. Make a git commit of that feature. \
+ONLY WORK ON A SINGLE FEATURE. \
+If, while implementing the feature, you notice the PRD is complete, output <promise>COMPLETE</promise>. \
+")
+
+    echo "$result"
+
+    if [[ "$result" == *"<promise>COMPLETE</promise>"* ]]; then
+        echo ""
+        echo -e "${GREEN}╔═══════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN}║${NC}  PRD COMPLETE after $i iterations!        ${GREEN}║${NC}"
+        echo -e "${GREEN}╚═══════════════════════════════════════════╝${NC}"
+        
+        if [ -n "$NOTIFY_CMD" ]; then
+            eval "$NOTIFY_CMD \"Ralph completed PRD after $i iterations\""
+        fi
+        exit 0
+    fi
+done
+
+echo ""
+echo -e "${YELLOW}Completed $ITERATIONS iterations. PRD may not be fully complete.${NC}"
+echo "Run 'ralph status' to check progress."
+

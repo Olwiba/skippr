@@ -1,0 +1,190 @@
+#!/bin/bash
+# ralph-init - Initialize ralph in a project
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATES_DIR="$SCRIPT_DIR/templates"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Help text
+show_help() {
+    echo -e "${BLUE}ralph-init${NC} - Initialize ralph in current project"
+    echo ""
+    echo "Usage: ralph-init [options]"
+    echo ""
+    echo "Options:"
+    echo "  -d, --dir <dir>      Plans directory (default: plans)"
+    echo "  -e, --example        Use example PRD with sample tasks"
+    echo "  -f, --force          Overwrite existing files"
+    echo "  -h, --help           Show this help"
+    echo ""
+    echo "Creates:"
+    echo "  plans/prd.json       Task list (empty or example)"
+    echo "  progress.txt         Progress log file"
+    echo ""
+}
+
+# Default values
+PLANS_DIR="plans"
+USE_EXAMPLE=false
+FORCE=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -d|--dir)
+            PLANS_DIR="$2"
+            shift 2
+            ;;
+        -e|--example)
+            USE_EXAMPLE=true
+            shift
+            ;;
+        -f|--force)
+            FORCE=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+PRD_FILE="$PLANS_DIR/prd.json"
+PROGRESS_FILE="progress.txt"
+
+echo -e "${BLUE}Initializing ralph...${NC}"
+echo ""
+
+# Create plans directory
+if [ ! -d "$PLANS_DIR" ]; then
+    mkdir -p "$PLANS_DIR"
+    echo -e "${GREEN}✓${NC} Created $PLANS_DIR/"
+else
+    echo -e "${YELLOW}○${NC} $PLANS_DIR/ already exists"
+fi
+
+# Create PRD file
+if [ -f "$PRD_FILE" ] && [ "$FORCE" != true ]; then
+    echo -e "${YELLOW}○${NC} $PRD_FILE already exists (use -f to overwrite)"
+else
+    if [ "$USE_EXAMPLE" = true ]; then
+        cat > "$PRD_FILE" << 'EOF'
+[
+  {
+    "category": "setup",
+    "description": "Project builds successfully",
+    "steps": [
+      "Run the build command",
+      "Verify no errors occur",
+      "Check output artifacts are created"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Main feature works as expected",
+    "steps": [
+      "Navigate to the feature",
+      "Perform the primary action",
+      "Verify expected outcome"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Interface displays correctly",
+    "steps": [
+      "Load the application",
+      "Verify layout renders properly",
+      "Check responsive behavior"
+    ],
+    "passes": false
+  },
+  {
+    "category": "validation",
+    "description": "Input validation works",
+    "steps": [
+      "Submit empty form",
+      "Verify error messages appear",
+      "Submit valid data",
+      "Verify success"
+    ],
+    "passes": false
+  },
+  {
+    "category": "error-handling",
+    "description": "Errors are handled gracefully",
+    "steps": [
+      "Trigger an error condition",
+      "Verify user-friendly message displayed",
+      "Verify app doesn't crash"
+    ],
+    "passes": false
+  }
+]
+EOF
+        echo -e "${GREEN}✓${NC} Created $PRD_FILE (example template)"
+    else
+        cat > "$PRD_FILE" << 'EOF'
+[
+  {
+    "category": "functional",
+    "description": "Describe your first task here",
+    "steps": [
+      "Step 1 to verify completion",
+      "Step 2 to verify completion",
+      "Step 3 to verify completion"
+    ],
+    "passes": false
+  }
+]
+EOF
+        echo -e "${GREEN}✓${NC} Created $PRD_FILE (empty template)"
+    fi
+fi
+
+# Create progress file
+if [ -f "$PROGRESS_FILE" ] && [ "$FORCE" != true ]; then
+    echo -e "${YELLOW}○${NC} $PROGRESS_FILE already exists (use -f to overwrite)"
+else
+    cat > "$PROGRESS_FILE" << EOF
+# Progress Log
+
+## $(date +%Y-%m-%d)
+
+Project initialized with ralph.
+
+---
+EOF
+    echo -e "${GREEN}✓${NC} Created $PROGRESS_FILE"
+fi
+
+echo ""
+echo -e "${GREEN}Ralph initialized!${NC}"
+echo ""
+echo "Next steps:"
+echo -e "  1. Edit ${YELLOW}$PRD_FILE${NC} with your tasks"
+echo -e "  2. Run ${YELLOW}ralph 5${NC} to start 5 iterations"
+echo -e "  3. Run ${YELLOW}ralph status${NC} to check progress"
+echo ""
+echo "PRD format:"
+echo '  {
+    "category": "functional|ui|validation|error-handling|setup",
+    "description": "Short task description",
+    "steps": ["Step 1", "Step 2", "..."],
+    "passes": false
+  }'
+

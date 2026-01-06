@@ -66,6 +66,11 @@ COPY config/.tmux.conf /etc/skel/.tmux.conf
 COPY config/.zshrc /etc/skel/.zshrc
 COPY config/.vimrc /etc/skel/.vimrc
 
+# Copy ralph scripts (agentic coding)
+COPY --chmod=755 ralph/ralph /usr/local/bin/ralph
+COPY --chmod=755 ralph/ralph-once /usr/local/bin/ralph-once
+COPY --chmod=755 ralph/ralph-init /usr/local/bin/ralph-init
+
 # Copy entrypoint script
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
