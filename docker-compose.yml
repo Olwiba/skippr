@@ -6,6 +6,9 @@ services:
 
     ports:
       - "7681:7681"
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
 
     volumes:
       # Persistent home directory - keeps all user data across redeployments
