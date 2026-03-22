@@ -3,6 +3,8 @@ services:
     build: .
     container_name: skippr
     restart: unless-stopped
+    mem_limit: 3g
+    memswap_limit: 6g
 
     ports:
       - "7681:7681"
